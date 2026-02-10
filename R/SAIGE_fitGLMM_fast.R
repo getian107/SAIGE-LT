@@ -98,6 +98,26 @@ Getrmat_indexvec_new = function(i, inC){
 
 
 
+GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies, time, entryTime){    ### add 'time' and 'entryTime' as inputs
+	# for each unique event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
+	
+	explin<-exp(lin.pred.new)    # explin[j] = exp(eta_j)
+
+	### for an event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
+	getdenom = function(i, caseIndexwithTies, explin, newIndexWithTies, time, entryTime){    # add 'time' and 'entryTime' as inputs
+		t0 = time[caseIndexwithTies[i]]    # event time
+		idx_risk = which(time >= t0 & entryTime < t0)   # indices of individuals who already entered and haven't failed at t0
+		x = 1/sum(explin[idx_risk])    # 1 / (sum_{j in riskset_i} exp(eta_j))
+		return(x)		
+	}
+
+	# apply over all event times; length = number of events
+	demonVec = sapply(seq(1,length(caseIndexwithTies)), getdenom, caseIndexwithTies, explin, newIndexWithTies, time, entryTime)    ### add 'time' and 'entryTime' as inputs
+	
+	return(demonVec)
+}
+
+
 
 
 GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexwithTies , orgIndex){
@@ -125,22 +145,7 @@ GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexw
 
 
 
-GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies){
-  #demonVec = rep(0, length(caseIndex))
-  explin<-exp(lin.pred.new)
-  #print("explin")
-  #print(explin[1:10])
-  getdenom = function(i,caseIndexwithTies, explin, newIndexWithTies){
-    nc = length(explin)
-    x = 1/sum(explin[which(newIndexWithTies >= caseIndexwithTies[i])])
-    return(x)
-  }
-  demonVec = sapply(seq(1,length(caseIndexwithTies)), getdenom, caseIndexwithTies, explin, newIndexWithTies)
-  #print("demonVec")
-  #print(demonVec[1:10])
-  #cat("demonVec: ", demonVec, "\n")
-  return(demonVec)
-}
+
 
 GetLambda0<-function(lin.pred,inC)
 {
