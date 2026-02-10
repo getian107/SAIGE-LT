@@ -1,37 +1,42 @@
 ### Modified by Tian on Feb 10, 2026
 ### Modified to account for left truncation
-### Assume top-level code provide a vector - 'entryTime'
+### Assume top-level code provides a vector - 'entryTime'
 ### Delayed entry risk set is defined as R(t) = {j: L_j < t <= T_j}
+###
+### Key modifications: (i) risk set definition; (ii) mean function mu
+### All modifications annotated by '###'
 
 GetIndexofCases = function(status, time, entryTime = NULL){    ### add 'entryTime'
 
 	if(is.null(entryTime)){
-		entryTime = rep(-Inf, length(time))    # reduce to no left truncation if 'entryTime' is null
+		entryTime = rep(-Inf, length(time))    ### reduce to no left truncation if 'entryTime' is null
 	}
+
+	timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status, entryTime=entryTime)   ### add 'entryTime'
+	timedata = timedata[order(timedata$time),]    # sort individuals by event/censoring time
+	timedata$newIndex = seq(1,length(time))    # newIndex = rank by time after sorting
 	
-	timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status)
-	timedata = timedata[order(timedata$time),]
-	timedata$newIndex = seq(1,length(time))
-	caseIndex = which(timedata$status == 1)
+	caseIndex = which(timedata$status == 1)    # indices in the sorted dataset when an event is observed
 	caseIndexwithTies = caseIndex
 	for(i in 2:length(caseIndex)){
 		if(timedata$time[caseIndex[i]] == timedata$time[caseIndex[i-1]]){
-			caseIndexwithTies[i] = caseIndexwithTies[i-1]
+			caseIndexwithTies[i] = caseIndexwithTies[i-1]    # individuals with the same event time get the same index
 		}
 	}
-
-  uniqTimeIndex = unique(caseIndexwithTies)
-  uniqTimeVec = timedata$time[uniqTimeIndex]
-  uniqTimeData = data.frame(uniqTimeVec = uniqTimeVec, uniqTimeIndex = uniqTimeIndex)
-  timedata$newIndexWithTies = timedata$newIndex
-
-  for(i in 1:nrow(timedata)){
-    if(timedata$time[i] %in% uniqTimeVec){
-      timedata$newIndexWithTies[i] = uniqTimeIndex[which(uniqTimeVec == timedata$time[i])]
-    }
-  }
-
-  return(list(timedata = timedata, caseIndex = caseIndex, caseIndexwithTies = caseIndexwithTies, uniqTimeIndex = uniqTimeIndex))
+	
+	uniqTimeIndex = unique(caseIndexwithTies)    # indices of unique event times
+	uniqTimeVec = timedata$time[uniqTimeIndex]    # unique event times
+	uniqTimeData = data.frame(uniqTimeVec = uniqTimeVec, uniqTimeIndex = uniqTimeIndex)
+	
+	timedata$newIndexWithTies = timedata$newIndex
+	for(i in 1:nrow(timedata)){
+		if(timedata$time[i] %in% uniqTimeVec){
+			timedata$newIndexWithTies[i] = uniqTimeIndex[which(uniqTimeVec == timedata$time[i])]    # all individuals (event or censored) at a tied event time get the same event time index
+		}
+	}
+	
+	return(list(timedata = timedata, caseIndex = caseIndex, caseIndexwithTies = caseIndexwithTies, uniqTimeIndex = uniqTimeIndex))
+	# timedata -- time, status, entryTime, orgIndex, newIndex, newIndexWithTies
 }
 
 
