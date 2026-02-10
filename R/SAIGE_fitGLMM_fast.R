@@ -99,14 +99,14 @@ Getrmat_indexvec_new = function(i, inC){
 
 
 GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies, time, entryTime){    ### add 'time' and 'entryTime' as inputs
-	# for each unique event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
+	# for each event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
 	
 	explin<-exp(lin.pred.new)    # explin[j] = exp(eta_j)
 
-	### for an event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
+	### for a given event time i, compute 1 / (sum_{j in riskset_i} exp(eta_j))
 	getdenom = function(i, caseIndexwithTies, explin, newIndexWithTies, time, entryTime){    # add 'time' and 'entryTime' as inputs
 		t0 = time[caseIndexwithTies[i]]    # event time
-		idx_risk = which(time >= t0 & entryTime < t0)   # indices of individuals who already entered and haven't failed at t0
+		idx_risk = which(time >= t0 & entryTime < t0)    ### risk set at t0: indices of individuals who already entered and haven't failed at t0
 		x = 1/sum(explin[idx_risk])    # 1 / (sum_{j in riskset_i} exp(eta_j))
 		return(x)		
 	}
@@ -119,19 +119,23 @@ GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies, 
 
 
 
+GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexwithTies, orgIndex, time, entryTime){    ### add 'time' and 'entryTime' as inputs
+	# for each unique event time i, compute d_i / (sum_{j in riskset_i} exp(eta_j))^2
+	
+	explin<-exp(lin.pred.new)    # explin[j] = exp(eta_j)
 
-GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexwithTies , orgIndex){
-	explin<-exp(lin.pred.new)
-
-	getdenominN = function(i,uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex){
-		nc = length(explin)
-		ntie = sum(caseIndexwithTies == uniqTimeIndex[i])
-    	x = ntie/(sum(explin[orgIndex[which(newIndexWithTies >= uniqTimeIndex[i])]]))^2
-    	return(x)
+	### for a given unique event time i, compute d_i / (sum_{j in riskset_i} exp(eta_j))^2
+	getdenominN = function(i, uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex, time, entryTime){
+		t0 = time[uniqTimeIndex[i]]    # unique event time
+		ntie = sum(caseIndexwithTies == uniqTimeIndex[i])    # number of failures at event time i: d_i
+		idx_risk = which(time >= t0 & entryTime < t0)    ### risk set at t0: indices of individuals who already entered and haven't failed at t0		
+		x = ntie/(sum(explin[orgIndex[idx_risk]]))^2    # d_i / (sum_{j in riskset_i} exp(eta_j))^2
+		return(x)
 	}
 	
-	demonVec = sapply(seq(1,length(uniqTimeIndex)), getdenominN, uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex)
-	#cat("demonVec: ", demonVec, "\n")
+	# apply over all unique event times; length = number of unique event times
+	demonVec = sapply(seq(1,length(uniqTimeIndex)), getdenominN, uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex, time, entryTime)    ### add 'time' and 'entryTime' as inputs
+
 	return(demonVec)
 }
 
