@@ -41,30 +41,45 @@ GetIndexofCases = function(status, time, entryTime = NULL){    ### add 'entryTim
 
 
 
+Getrmat = function(i, inC){
+	orgi = inC$timedata[,"orgIndex"][i]    # original index of individual i
+	x = inC$timedata$time[i]    # event or censoring time of individual i
+	l = inC$timedata$entryTime[i]    ### entry time of individual i
+	
+	a = rep(0, length(inC$uniqTimeIndex))    # create a vector of zeros; length = number of unique event times
+	uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
+	
+	a[which(uniqTimeIndexVec > l & uniqTimeIndexVec <= x)] = 1    ### indicator of whether individual i is in the delayed entry risk set
+	b = c(orgi, a)    # combine original index with risk set indicators
+	
+	return(b)
+}
+
+
+
+
+
+
+
+
+
 GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexwithTies , orgIndex){
-  explin<-exp(lin.pred.new)
+	explin<-exp(lin.pred.new)
 
-  getdenominN = function(i,uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex){
-    nc = length(explin)
-    ntie = sum(caseIndexwithTies == uniqTimeIndex[i])
-    x = ntie/(sum(explin[orgIndex[which(newIndexWithTies >= uniqTimeIndex[i])]]))^2
-    return(x)
-  }
-  demonVec = sapply(seq(1,length(uniqTimeIndex)), getdenominN, uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex)
-  #cat("demonVec: ", demonVec, "\n")
-  return(demonVec)
+	getdenominN = function(i,uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex){
+		nc = length(explin)
+		ntie = sum(caseIndexwithTies == uniqTimeIndex[i])
+    	x = ntie/(sum(explin[orgIndex[which(newIndexWithTies >= uniqTimeIndex[i])]]))^2
+    	return(x)
+	}
+	
+	demonVec = sapply(seq(1,length(uniqTimeIndex)), getdenominN, uniqTimeIndex, explin, newIndexWithTies, caseIndexwithTies, orgIndex)
+	#cat("demonVec: ", demonVec, "\n")
+	return(demonVec)
 }
 
 
-Getrmat = function(i,inC){
-    orgi = inC$timedata[,"orgIndex"][i]
-    x = inC$timedata$time[i]
-    a = rep(0, length(inC$uniqTimeIndex))
-    uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]
-    a[which(uniqTimeIndexVec <= x)] = 1
-    b = c(orgi, a)
-    return(b)
-}
+
 
 
 Getrmat_indexvec = function(i,inC){
