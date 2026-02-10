@@ -46,9 +46,9 @@ Getrmat = function(i, inC){
 	x = inC$timedata$time[i]    # event or censoring time of individual i
 	l = inC$timedata$entryTime[i]    ### entry time of individual i
 	
-	a = rep(0, length(inC$uniqTimeIndex))    # create a vector of zeros; length = number of unique event times
 	uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
-	
+
+	a = rep(0, length(inC$uniqTimeIndex))    # create a vector of zeros; length = number of unique event times
 	a[which(uniqTimeIndexVec > l & uniqTimeIndexVec <= x)] = 1    ### indicator of whether individual i is in the delayed entry risk set
 	b = c(orgi, a)    # combine original index with risk set indicators
 	
@@ -57,7 +57,24 @@ Getrmat = function(i, inC){
 
 
 
+Getrmat_indexvec_new = function(i, inC){
+	orgi = inC$timedata[,"orgIndex"][i]    # original index of individual i
+	x = inC$timedata$time[i]    # event or censoring time of individual i
+	l = inC$timedata$entryTime[i]    ### entry time of individual i
+	
+	uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
 
+	### interval for risk membership
+	kend = findInterval(x, uniqTimeIndexVec)   # end index: last k with t_k <= x
+	kstart = findInterval(l, uniqTimeIndexVec) + 1    # start index: first k with t_k > l
+	if(kstart > kend){
+		b = c(orgi, 1, 0)    # empty interval
+	}else{
+		b = c(orgi, kstart, kend)
+	}
+	
+	return(b)
+}
 
 
 
@@ -95,15 +112,7 @@ Getrmat_indexvec = function(i,inC){
 }
 
 
-Getrmat_indexvec_new = function(i,inC){
-    orgi = inC$timedata[,"orgIndex"][i]
-    x = inC$timedata$time[i]
-    a = rep(0, length(inC$uniqTimeIndex))
-    uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]
-    a = which(uniqTimeIndexVec <= x)
-    b = c(orgi, a[length(a)])
-    return(b)
-}
+
 
 
 GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies){
