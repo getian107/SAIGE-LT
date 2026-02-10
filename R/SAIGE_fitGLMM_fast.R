@@ -1,14 +1,24 @@
-GetIndexofCases = function(status, time){
-  timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status)
-  timedata = timedata[order(timedata$time),]
-  timedata$newIndex = seq(1,length(time))
-  caseIndex = which(timedata$status == 1)
-  caseIndexwithTies = caseIndex
-  for(i in 2:length(caseIndex)){
-    if(timedata$time[caseIndex[i]] == timedata$time[caseIndex[i-1]]){
-      caseIndexwithTies[i] = caseIndexwithTies[i-1]
-    }
-  }
+### Modified by Tian on Feb 10, 2026
+### Modified to account for left truncation
+### Assume top-level code provide a vector - 'entryTime'
+### Delayed entry risk set is defined as R(t) = {j: L_j < t <= T_j}
+
+GetIndexofCases = function(status, time, entryTime = NULL){    ### add 'entryTime'
+
+	if(is.null(entryTime)){
+		entryTime = rep(-Inf, length(time))    # reduce to no left truncation if 'entryTime' is null
+	}
+	
+	timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status)
+	timedata = timedata[order(timedata$time),]
+	timedata$newIndex = seq(1,length(time))
+	caseIndex = which(timedata$status == 1)
+	caseIndexwithTies = caseIndex
+	for(i in 2:length(caseIndex)){
+		if(timedata$time[caseIndex[i]] == timedata$time[caseIndex[i-1]]){
+			caseIndexwithTies[i] = caseIndexwithTies[i-1]
+		}
+	}
 
   uniqTimeIndex = unique(caseIndexwithTies)
   uniqTimeVec = timedata$time[uniqTimeIndex]
