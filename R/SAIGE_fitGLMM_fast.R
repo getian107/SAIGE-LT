@@ -82,11 +82,11 @@ Getrmat_indexvec_new = function(i, inC){
 	x = inC$timedata$time[i]    # event or censoring time of individual i
 	l = inC$timedata$entryTime[i]    ### entry time of individual i
 	
-	uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
+	uniqTimeVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
 
 	### interval for risk membership
-	kend = findInterval(x, uniqTimeIndexVec)    # end index: last k with t_k <= x
-	kstart = findInterval(l, uniqTimeIndexVec) + 1    # start index: first k with t_k > l
+	kend = findInterval(x, uniqTimeVec)    # end index: last k with t_k <= x
+	kstart = findInterval(l, uniqTimeVec) + 1    # start index: first k with t_k > l
 	if(kstart > kend){
 		b = c(orgi, 1, 0)    # empty interval
 	}else{
@@ -121,6 +121,7 @@ GetdenominLambda0 = function(caseIndexwithTies, lin.pred.new, newIndexWithTies, 
 
 GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexwithTies, orgIndex, time, entryTime){    ### add 'time' and 'entryTime' as inputs
 	# for each unique event time i, compute d_i / (sum_{j in riskset_i} exp(eta_j))^2
+	###??? double check -- lin.pred.new is in the original order here but in the time sorted order in GetdenominLambda0
 	
 	explin<-exp(lin.pred.new)    # explin[j] = exp(eta_j)
 
@@ -141,35 +142,59 @@ GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexw
 
 
 
+GetLambda0<-function(lin.pred, inC){   ### this function is rewritten
+	# for each individual i, calculate Lambda0(t_i) - Lambda0(l_i)
+	
+	lin.pred.new = lin.pred[inC$timedata$orgIndex]    # convert linear predictors from original order to time sorted order
 
+	# baseline hazard denominators for each event
+	demonVec = GetdenominLambda0(inC$caseIndexwithTies, lin.pred.new, inC$timedata$newIndexWithTies, inC$timedata$time, inC$timedata$entryTime)    ### add 'time' and 'entryTime' 
 
+	n = length(lin.pred)    # number of individuals
+	Lambda0T<-rep(0,n)
+	Lambda0L<-rep(0,n)
 
+	uniqTimeVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
+	
+	for(i in 1:n){		
+		orgi = inC$timedata$orgIndex[i]    # original index of individual i
+		Ti = inC$timedata$time[i]    # event or censoring time of individual i
+		Li = inC$timedata$entryTime[i]    # entry time of individual i
 
+		kT = findInterval(Ti, uniqTimeVec)    # index for unique time vectors
+		if(kT > 0){
+			jT = inC$uniqTimeIndex[kT]    # index for the largest unique event time <= Ti
+			lambda0T = sum(demonVec[which(inC$caseIndexwithTies <= jT)])    # sum_{t_k <= Ti} [1 / (sum_{i in riskset_k} exp(eta_i))]
+		}else{
+			lambda0T = 0
+		}
 
+		kL = findInterval(Li, uniqTimeVec)    # index for unique time vectors
+		if(kL > 0){
+			jL = inC$uniqTimeIndex[kL]    # index for the largest unique event time <= Li
+			lambda0L = sum(demonVec[which(inC$caseIndexwithTies <= jL)])    # sum_{t_k <= Li} [1 / (sum_{i in riskset_k} exp(eta_i))]
+		}else{
+			lambda0L = 0
+		}
 
+		Lambda0T[orgi] = lambda0T    # Lambda0T in the original order
+		Lambda0L[orgi] = lambda0L    # Lambda0L in the original order
+	}
 
-
-
-
-GetLambda0<-function(lin.pred,inC)
-{
-    #inC = GetIndexofCases(status, time)
-  lin.pred.new = lin.pred[inC$timedata$orgIndex]
-  #cat("lin.pred.new: ", lin.pred.new, "\n")
-  demonVec = GetdenominLambda0(inC$caseIndexwithTies, lin.pred.new, inC$timedata$newIndexWithTies)
-  #cat("demonVec: ", demonVec, "\n")
-  #cat("inC$caseIndexwithTies: ", inC$caseIndexwithTies, "\n")
-  #timeC = inC$timedata$time[inC$caseIndex]
-  Lambda0<-rep(0,length(lin.pred))
-  lambda0 = 0
-  for(i in 1:length(lin.pred))
-  {
-    j = inC$timedata$newIndexWithTies[i]
-    lambda0 = sum(demonVec[which(inC$caseIndexwithTies <= j)])
-    Lambda0[inC$timedata$orgIndex[i]] = lambda0
-  }
-  return(Lambda0)
+	LambdaDiff = Lambda0T - Lambda0L    # difference between Lambda0T and Lambda0L to account for left truncation
+	
+	return(LambdaDiff)
 }
+
+
+
+
+
+
+
+
+
+
 
 # Run iterations to get converged alpha and eta
 Get_Coef = function(y, X, tau, family, alpha0, eta0,  offset, maxiterPCG, tolPCG,maxiter, verbose=FALSE, inC = NULL, tol.coef=0.1){
