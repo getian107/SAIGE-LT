@@ -189,8 +189,8 @@ GetLambda0<-function(lin.pred, inC){   ### this function is rewritten
 
 
 # Run iterations to get converged alpha and eta
-Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,maxiter, verbose=FALSE, inC=NULL, tol.coef=0.1){
-	if(is.null(inC)){
+Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG, maxiter, verbose=FALSE, inC=NULL, tol.coef=0.1){
+	if(is.null(inC)){    # standard GLM IRLS
 		mu = family$linkinv(eta0)
 		mu.eta = family$mu.eta(eta0)
 		Y = eta0 - offset + (y - mu)/mu.eta
@@ -202,13 +202,13 @@ Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,
 
 	for(i in 1:maxiter){
 		if(!is.null(inC)){
-			Lambda0 = GetLambda0(eta, inC)
-			mu = Lambda0*exp(eta)
-			Y = eta + (y - mu)/mu
+			Lambda0 = GetLambda0(eta, inC)    ### GetLambda0 returns Lambda0(t_i) - Lambda0(l_i)
+			mu = Lambda0*exp(eta)    # mean
+			Y = eta + (y - mu)/mu    # working response
 			W = as.vector(mu)
 		}
 		
-		re.coef = getCoefficients(Y, X, W, tau, maxiter=maxiterPCG, tol=tolPCG)
+		re.coef = getCoefficients(Y, X, W, tau, maxiter=maxiterPCG, tol=tolPCG)    ###??? double check -- getCoefficients not defined in this script
 		alpha = re.coef$alpha
 		eta = re.coef$eta + offset
 
@@ -219,7 +219,7 @@ Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,
 			print(alpha)
 		}
 		
-		if(is.null(inC)){
+		if(is.null(inC)){    # standard GLM IRLS
 			mu = family$linkinv(eta)
 			mu.eta = family$mu.eta(eta)
 			Y = eta - offset + (y - mu)/mu.eta
@@ -227,7 +227,7 @@ Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,
 			W = sqrtW^2
 		}
 		
-		if( max(abs(alpha - alpha0)/(abs(alpha) + abs(alpha0) + tol.coef))< tol.coef){
+		if(max(abs(alpha - alpha0)/(abs(alpha) + abs(alpha0) + tol.coef))< tol.coef){    # check convergence
 			break
 		}
 		alpha0 = alpha
@@ -235,9 +235,10 @@ Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,
 	
 	if(!is.null(inC)){
 		re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu, Lambda0 = Lambda0)
-	}else{
+	}else{    # standard GLM IRLS
 		re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, sqrtW=sqrtW, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu)
 	}
+	###??? re is never returned?
 }
 
 
