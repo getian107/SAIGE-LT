@@ -188,76 +188,56 @@ GetLambda0<-function(lin.pred, inC){   ### this function is rewritten
 
 
 
-
-
-
-
-
-
-
-
 # Run iterations to get converged alpha and eta
-Get_Coef = function(y, X, tau, family, alpha0, eta0,  offset, maxiterPCG, tolPCG,maxiter, verbose=FALSE, inC = NULL, tol.coef=0.1){
-  #tol.coef = 0.1
-  #eta = eta0
-  
-  #if(!is.null(inC)){
-  #  Lambda0 = GetLambda0(eta0, inC)
-  #  mu = Lambda0*exp(eta0)
-  #  Y = eta0 + (y - mu)/mu
-  #  W = as.vector(mu)
-  #}else{
-  if(is.null(inC)){
-    mu = family$linkinv(eta0)
-    mu.eta = family$mu.eta(eta0)
-    Y = eta0 - offset + (y - mu)/mu.eta
-    sqrtW = mu.eta/sqrt(family$variance(mu))
-    W = sqrtW^2
-  }else{
-    eta = eta0	
-  }
+Get_Coef = function(y, X, tau, family, alpha0, eta0, offset, maxiterPCG, tolPCG,maxiter, verbose=FALSE, inC=NULL, tol.coef=0.1){
+	if(is.null(inC)){
+		mu = family$linkinv(eta0)
+		mu.eta = family$mu.eta(eta0)
+		Y = eta0 - offset + (y - mu)/mu.eta
+		sqrtW = mu.eta/sqrt(family$variance(mu))
+		W = sqrtW^2
+	}else{
+		eta = eta0	
+	}
 
+	for(i in 1:maxiter){
+		if(!is.null(inC)){
+			Lambda0 = GetLambda0(eta, inC)
+			mu = Lambda0*exp(eta)
+			Y = eta + (y - mu)/mu
+			W = as.vector(mu)
+		}
+		
+		re.coef = getCoefficients(Y, X, W, tau, maxiter=maxiterPCG, tol=tolPCG)
+		alpha = re.coef$alpha
+		eta = re.coef$eta + offset
 
-  for(i in 1:maxiter){
-    if(!is.null(inC)){
-      Lambda0 = GetLambda0(eta, inC)
-      mu = Lambda0*exp(eta)
-      Y = eta + (y - mu)/mu
-      W = as.vector(mu)
+		if(verbose){
+			cat("Tau:\n")
+			print(tau)
+			cat("Fixed-effect coefficients:\n")
+			print(alpha)
+		}
+		
+		if(is.null(inC)){
+			mu = family$linkinv(eta)
+			mu.eta = family$mu.eta(eta)
+			Y = eta - offset + (y - mu)/mu.eta
+			sqrtW = mu.eta/sqrt(family$variance(mu))
+			W = sqrtW^2
+		}
+		
+		if( max(abs(alpha - alpha0)/(abs(alpha) + abs(alpha0) + tol.coef))< tol.coef){
+			break
+		}
+		alpha0 = alpha
     }
-
-
-
-    re.coef = getCoefficients(Y, X, W, tau, maxiter=maxiterPCG, tol=tolPCG)
-    alpha = re.coef$alpha
-    eta = re.coef$eta + offset
-
-    if(verbose) {
-      cat("Tau:\n")
-      print(tau)
-      cat("Fixed-effect coefficients:\n")
-      print(alpha)
-    }
-
-    if(is.null(inC)){
-      mu = family$linkinv(eta)
-      mu.eta = family$mu.eta(eta)
-      Y = eta - offset + (y - mu)/mu.eta
-      sqrtW = mu.eta/sqrt(family$variance(mu))
-      W = sqrtW^2
-    }
-
-    if( max(abs(alpha - alpha0)/(abs(alpha) + abs(alpha0) + tol.coef))< tol.coef){
-	break
-    }
-      alpha0 = alpha
-    }
-
-    if(!is.null(inC)){
-      re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu, Lambda0 = Lambda0)
-    }else{
-      re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, sqrtW=sqrtW, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu)
-    }
+	
+	if(!is.null(inC)){
+		re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu, Lambda0 = Lambda0)
+	}else{
+		re = list(Y=Y, alpha=alpha, eta=eta, W=W, cov=re.coef$cov, sqrtW=sqrtW, Sigma_iY = re.coef$Sigma_iY, Sigma_iX = re.coef$Sigma_iX, mu=mu)
+	}
 }
 
 
