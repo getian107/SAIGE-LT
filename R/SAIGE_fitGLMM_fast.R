@@ -1528,15 +1528,20 @@ fitNULLGLMM = function(plinkFile = "",
     if (traitType == "binary" | traitType == "survival"){	
         if(traitType == "survival"){
             cat("Survival analysis will be performed\n")
+
+			### robust check of event time
             if (is.null(eventTime)){
 				stop("ERROR! event time is NULL\n")
-            }else{
-                if (sum(eventTime < 0)){
-                    stop("ERROR! event time value needs to be greater than or equal to 0 \n")
-                }
             }
+			if (any(!is.finite(eventTime))){
+				stop("ERROR! event time has NA/Inf values\n")
+			}
 
-			if(!is.null(entryTime)){
+			### robustness check of entryTime
+			if (!is.null(entryTime)){
+				if (any(!is.finite(entryTime))){
+					stop("ERROR! entry time has NA/Inf values\n")
+				}
 				if (any(entryTime >= eventTime)){
 					stop("ERROR! entryTime must be < eventTime for survival with left truncation \n")
 				}
