@@ -2068,363 +2068,314 @@ fitNULLGLMM = function(plinkFile = "",
 
 ##suggested by Shawn 01-19-2018
 Covariate_Transform<-function(formula, data, traitType){
-  X1<-model.matrix(formula,data=data)
-#  X1=X1[,c(2:ncol(X1))] #remove intercept
-  formula.frame<-model.frame(formula,data=data)
-  Y = model.response(formula.frame, type = "any")
-  X_name = colnames(X1)
+	X1<-model.matrix(formula, data=data)
+	formula.frame<-model.frame(formula,data=data)
+	Y = model.response(formula.frame, type = "any")
+	X_name = colnames(X1)
 		
-  # First run linear regression to identify multi collinearity 
-  out.lm<-lm(Y ~ X1 - 1, data=data)
-#  out.lm<-lm(Y ~ X1, data=data)
-  idx.na<-which(is.na(out.lm$coef))
-  if(length(idx.na)> 0){
-	print(head(X1))
-	X1<-X1[, -idx.na]
-	print(head(X1))
+	# First run linear regression to identify multi collinearity 
+	out.lm<-lm(Y ~ X1 - 1, data=data)
+	# out.lm<-lm(Y ~ X1, data=data)
+	idx.na<-which(is.na(out.lm$coef))
+	
+	if (length(idx.na) > 0){
+		print(head(X1))
+		X1<-X1[, -idx.na]
+		print(head(X1))
         cat("Warning: multi collinearity is detected in covariates! ", X_name[idx.na], " will be excluded in the model\n")
-	X_name = X_name[-idx.na]		
-        #cat("Warning: multi collinearity is detected in covariates! ", X_name[idx.na], " will be excluded in the model\n")
-  }
-  if(!(1 %in% idx.na)){
-    X_name[1] = "minus1"
-  }
-
- if(traitType == "survival"){
-   X_name = X_name[-1]
-   X1 = X1[,-1,drop=FALSE]
- }
+		X_name = X_name[-idx.na]
+	}
 	
- # QR decomposition
-  Xqr = qr(X1)
-  X1_Q = qr.Q(Xqr)
-  qrr = qr.R(Xqr)
+	if (!(1 %in% idx.na)){
+		X_name[1] = "minus1"
+	}
 	
-  N<-nrow(X1)
+	if (traitType == "survival"){
+		X_name = X_name[-1]
+		X1 = X1[,-1,drop=FALSE]
+	}
 	
-  # Make square summation=N (so mean=1)
-  X1_new<-X1_Q * sqrt(N)	
-  Param.transform<-list(qrr=qrr, N=N, X_name = X_name, idx.na=idx.na)
-  re<-list(Y =Y, X1 = X1_new, Param.transform=Param.transform)
+	# QR decomposition
+	Xqr = qr(X1)
+	X1_Q = qr.Q(Xqr)
+	qrr = qr.R(Xqr)
+	N<-nrow(X1)
+	
+	# Make square summation=N (so mean=1)
+	X1_new<-X1_Q * sqrt(N)	
+	Param.transform<-list(qrr=qrr, N=N, X_name=X_name, idx.na=idx.na)
+	re<-list(Y =Y, X1 = X1_new, Param.transform=Param.transform)
 }
+
+
 
 # In case to recover original scale coefficients
 # X \beta = Q R \beta = (Q \sqrt(N)) ( R \beta / \sqrt(N))
 # So coefficient from fit.new is the same as R \beta / \sqrt(N)
-Covariate_Transform_Back<-function(coef, Param.transform){	
-	#coef<-fit.new$coef; Param.transform=out.transform$Param.transform
+Covariate_Transform_Back<-function(coef, Param.transform){
 	coef1<-coef * sqrt(Param.transform$N)
-	coef.org<-solve(Param.transform$qrr, coef1)
-	
+	coef.org<-solve(Param.transform$qrr, coef1)	
 	names(coef.org)<-Param.transform$X_name
 	return(coef.org)
 }
 
 
-pcg<-function (A, b, M=NULL, maxiter = 1e+05, tol = 1e-06){
-  
-  # A<-a; b<-c1[,1]; M<-NULL;maxiter = 1e+05; tol = 1e-06
-  if (is.null(M)) {
-    dA <- diag(A)
-    dA[which(dA == 0)] = 1e-04
-    #print("dA")
-    #print(dA)
-    Minv = 1/dA
-  } else Minv = solve(M)
-  print("R")
-  print(Minv)
-  x = rep(0, length(b))
-  r = b 
-  if(is.null(M)){
-    z = Minv *r
-  } else {
-    z= Minv %*% r
-  }
-  p = z
-  iter = 0
-  sumr2 = sum(r^2)
-  while (sumr2 > tol & iter < maxiter) {
-    iter = iter + 1
-#    cat("iter is ", iter, "\n")
-    Ap = crossprod(p, A)[1,]
-    a = as.numeric((t(r) %*% z)/(t(p) %*% Ap))
-    x = x + a * p
-    r1 = r - a * Ap
-    
-    if(is.null(M)){
-      z1 = Minv * r1
-    } else {
-      z1 = Minv %*% r1
-    }
-    
-    
-    bet = as.numeric((t(z1) %*% r1)/(t(z) %*% r))
 
-    p = z1 + bet * p
+pcg<-function (A, b, M = NULL, maxiter = 1e+05, tol = 1e-06){
+	if (is.null(M)){
+		dA <- diag(A)
+		dA[which(dA == 0)] = 1e-04
+		Minv = 1/dA
+	}else Minv = solve(M)
+	
+	print("R")
+	print(Minv)
+	x = rep(0, length(b))
+	r = b 
+	if(is.null(M)){
+		z = Minv *r
+	}else{
+		z= Minv %*% r
+	}
+	
+	p = z
+	iter = 0
+	sumr2 = sum(r^2)
+	while (sumr2 > tol & iter < maxiter){
+		iter = iter + 1
+		Ap = crossprod(p, A)[1,]
+		a = as.numeric((t(r) %*% z)/(t(p) %*% Ap))
+		x = x + a * p
+		r1 = r - a * Ap
 
-    z = z1
-    r = r1
-    sumr2 = sum(r^2)
-  }
-  if (iter >= maxiter) 
-    x = "pcg did not converge. You may increase maxiter number."
-  return(x)
+		if (is.null(M)){
+			z1 = Minv * r1
+		}else{
+			z1 = Minv %*% r1
+		}
+		
+		bet = as.numeric((t(z1) %*% r1)/(t(z) %*% r))
+		p = z1 + bet * p
+		z = z1
+		r = r1
+		sumr2 = sum(r^2)
+	}
+	
+	if (iter >= maxiter)
+		x = "pcg did not converge. You may increase maxiter number."
+	
+	return(x)
 }
 
 
-pcgSparse<-function (A, b, M=NULL, maxiter = 1e+05, tol = 1e-06){
-  # A<-a; b<-c1[,1]; M<-NULL;maxiter = 1e+05; tol = 1e-06
-  if (is.null(M)) {
-    dA <- diag(A)
-    dA[which(dA == 0)] = 1e-04
-    #print("dA")
-    #print(dA)
-    Minv = 1/dA
-  } else Minv = solve(M)
-  x = rep(0, length(b))
-  r = b
-  if(is.null(M)){
-    z = Minv *r
-  } else {
-    z= Minv %*% r
-  }
-  p = z
-  iter = 0
-  sumr2 = sum(r^2)
-  print("psparse0")
-  psparse =  Matrix:::sparseMatrix(i = rep(1, length(p)), j = c(1:length(p)), x = as.vector(p))
-  cat("nrow(psparse) ", nrow(psparse), "\n")
-  cat("ncol(psparse) ", ncol(psparse), "\n")
-  print(class(psparse))
 
-  while (sumr2 > tol & iter < maxiter) {
-    iter = iter + 1
-    #Ap = crossprod(p, A)[1,]
-    print(class(psparse)[1])	
-    print(class(A)[1])	
-    print(nrow(psparse))	
-    print(ncol(psparse))	
-    print(nrow(A))	
-    print(ncol(A))	
+pcgSparse<-function (A, b, M = NULL, maxiter = 1e+05, tol = 1e-06){
+	if (is.null(M)){
+		dA <- diag(A)
+		dA[which(dA == 0)] = 1e-04
+		Minv = 1/dA
+	}else Minv = solve(M)
+	
+	x = rep(0, length(b))
+	r = b
+	if (is.null(M)){
+		z = Minv *r
+	}else{
+		z= Minv %*% r
+	}
 
-    #Ap = sparse_row_idx_mult(psparse, A)
-    Ap = psparse%*%A[1,]
-    print("psparse1")
-    a = as.numeric((t(r) %*% z)/(t(p) %*% Ap))
-    x = x + a * p
-    r1 = r - a * Ap
+	p = z
+	iter = 0
+	sumr2 = sum(r^2)
+	print("psparse0")
+	psparse =  Matrix:::sparseMatrix(i = rep(1, length(p)), j = c(1:length(p)), x = as.vector(p))
+	cat("nrow(psparse) ", nrow(psparse), "\n")
+	cat("ncol(psparse) ", ncol(psparse), "\n")
+	print(class(psparse))
+	
+	while (sumr2 > tol & iter < maxiter){
+		iter = iter + 1
+		print(class(psparse)[1])
+		print(class(A)[1])
+		print(nrow(psparse))
+		print(ncol(psparse))
+		print(nrow(A))
+		print(ncol(A))	
 
-    if(is.null(M)){
-      z1 = Minv * r1
-    } else {
-      z1 = Minv %*% r1
-    }
-
-
-    bet = as.numeric((t(z1) %*% r1)/(t(z) %*% r))
-
-    p = z1 + bet * p
-
-    z = z1
-    r = r1
-    sumr2 = sum(r^2)
-  }
-  if (iter >= maxiter)
-    x = "pcg did not converge. You may increase maxiter number."
-  return(x)
+		Ap = psparse%*%A[1,]
+		print("psparse1")
+		a = as.numeric((t(r) %*% z)/(t(p) %*% Ap))
+		x = x + a * p
+		r1 = r - a * Ap
+		
+		if (is.null(M)){
+			z1 = Minv * r1
+		}else{
+			z1 = Minv %*% r1
+		}
+		
+		bet = as.numeric((t(z1) %*% r1)/(t(z) %*% r))
+		p = z1 + bet * p
+		z = z1
+		r = r1
+		sumr2 = sum(r^2)
+	}
+	
+	if (iter >= maxiter)
+		x = "pcg did not converge. You may increase maxiter number."
+	
+	return(x)
 }
+
 
 
 #https://gist.github.com/bobthecat/5024079
 bigGRMPar = function(x, nblocks = 10, verbose = TRUE, ncore= 1, relatednessCutoff = 0){
 #  library(foreach)
 #  library(doParallel)
-  #register cores
-  doParallel:::registerDoParallel(ncore)
+#  register cores
+	
+	doParallel:::registerDoParallel(ncore)
 
-  NCOL <- ncol(x)
-  NROW <- nrow(x)
+	NCOL <- ncol(x)
+	NROW <- nrow(x)
+	
+	#  test if ncol(x) %% nblocks gives remainder 0
+	#  if (NCOL %% nblocks != 0){stop("Choose different 'nblocks' so that ncol(x) %% nblocks = 0!")}
 
-  ## test if ncol(x) %% nblocks gives remainder 0
-#  if (NCOL %% nblocks != 0){stop("Choose different 'nblocks' so that ncol(x) %% nblocks = 0!")}
-
-#  if(NCOL %% nblocks == 0){
-  ## split column numbers into 'nblocks' groups
-#  SPLIT <- split(1:NCOL, rep(1:nblocks, each = NCOL/nblocks))
+	#  split column numbers into 'nblocks' groups
+	#  SPLIT <- split(1:NCOL, rep(1:nblocks, each = NCOL/nblocks))
   
-  SPLIT <- split(1:NCOL, ceiling(seq_along(1:NCOL)/(NCOL%/%nblocks)))
-  ## create all unique combinations of blocks
-  COMBS <- expand.grid(1:length(SPLIT), 1:length(SPLIT))
-  COMBS <- t(apply(COMBS, 1, sort))
-  COMBS <- unique(COMBS)
-#  }else{
-#    NCOLNEW = NCOL - (NCOL%%nblocks + NCOL%/%nblocks)
-#    SPLIT <- split(1:NCOLNEW, rep(1:(nblocks-1), each = NCOLNEW/(nblocks-1)))
-#  }
-  ## iterate through each block combination, calculate correlation matrix
-  ## between blocks and store them in the preallocated matrix on both
-  ## symmetric sides of the diagonal
-  `%dopar%` <- foreach::`%dopar%`
-  results <- foreach:::foreach(i = 1:nrow(COMBS), .combine='rbind')%dopar%{
-        COMB <- COMBS[i, ]
+	SPLIT <- split(1:NCOL, ceiling(seq_along(1:NCOL)/(NCOL%/%nblocks)))
+	# create all unique combinations of blocks
+	COMBS <- expand.grid(1:length(SPLIT), 1:length(SPLIT))
+	COMBS <- t(apply(COMBS, 1, sort))
+	COMBS <- unique(COMBS)
+	
+	# iterate through each block combination, calculate correlation matrix
+	# between blocks and store them in the preallocated matrix on both
+	# symmetric sides of the diagonal
+	`%dopar%` <- foreach::`%dopar%`
+	results <- foreach:::foreach(i = 1:nrow(COMBS), .combine='rbind')%dopar%{
+		COMB <- COMBS[i, ]
         G1 <- SPLIT[[COMB[1]]]
         G2 <- SPLIT[[COMB[2]]]
-        if (verbose) cat("Block", COMB[1], "with Block", COMB[2], "\n")
-        flush.console()
-        GRM <- t(x[, G1])%*%(x[, G2])
+		
+		if (verbose) cat("Block", COMB[1], "with Block", COMB[2], "\n")
+		
+		flush.console()
+		GRM <- t(x[, G1])%*%(x[, G2])
 
-        if(sum(G1 != G2) == 0){
-                GRM[lower.tri(GRM, diag = FALSE)] = 0
-        }
+        if (sum(G1 != G2) == 0){
+			GRM[lower.tri(GRM, diag = FALSE)] = 0
+		}
         GRM <- GRM/NROW
         indice <- which(GRM >= relatednessCutoff, arr.ind=T)
         cbind(G1[indice[,1]], G2[indice[,2]])
-#       resultsIVec =c(resultsIVec, G1[indice[,1]])
-#        resultsJVec =c(resultsJVec, G2[indice[,2]])
-        #corMAT[G1, G2] <- COR
-        #corMAT[G2, G1] <- t(COR)
-#       GRM <- NULL
-#       indice = NULL
-}
-  #gc()
-  return(results)
+	}
+	
+	return(results)
 }
 
 
 
 bigGRMPar_new = function(nblocks = 10, verbose = TRUE, ncore= 1, relatednessCutoff = 0){
-  doParallel:::registerDoParallel(ncore)
+	doParallel:::registerDoParallel(ncore)
 
-  NCOL <- getNColStdGenoMultiMarkersMat()
-  NROW <- getNRowStdGenoMultiMarkersMat()
-  cat("NCOL: ", NCOL, "\n")
-  cat("NROW: ", NROW, "\n")
+	NCOL <- getNColStdGenoMultiMarkersMat()
+	NROW <- getNRowStdGenoMultiMarkersMat()
+	cat("NCOL: ", NCOL, "\n")
+	cat("NROW: ", NROW, "\n")
 
-  nblocks <- NCOL%/%10
+	nblocks <- NCOL%/%10
+	
+	SPLIT <- split(1:NCOL, ceiling(seq_along(1:NCOL)/(NCOL%/%nblocks)))
+	# create all unique combinations of blocks
+	COMBS <- expand.grid(1:length(SPLIT), 1:length(SPLIT))
+	COMBS <- t(apply(COMBS, 1, sort))
+	COMBS <- unique(COMBS)
 
-  ## test if ncol(x) %% nblocks gives remainder 0
-#  if (NCOL %% nblocks != 0){stop("Choose different 'nblocks' so that ncol(x) %% nblocks = 0!")}
-
-#  if(NCOL %% nblocks == 0){
-  ## split column numbers into 'nblocks' groups
-#  SPLIT <- split(1:NCOL, rep(1:nblocks, each = NCOL/nblocks))
-
-  SPLIT <- split(1:NCOL, ceiling(seq_along(1:NCOL)/(NCOL%/%nblocks)))
-  ## create all unique combinations of blocks
-  COMBS <- expand.grid(1:length(SPLIT), 1:length(SPLIT))
-  COMBS <- t(apply(COMBS, 1, sort))
-  COMBS <- unique(COMBS)
-#  }else{
-#    NCOLNEW = NCOL - (NCOL%%nblocks + NCOL%/%nblocks)
-#    SPLIT <- split(1:NCOLNEW, rep(1:(nblocks-1), each = NCOLNEW/(nblocks-1)))
-#  }
-  ## iterate through each block combination, calculate correlation matrix
-  ## between blocks and store them in the preallocated matrix on both
-  ## symmetric sides of the diagonal
-  `%dopar%` <- foreach::`%dopar%`
-  results <- foreach:::foreach(i = 1:nrow(COMBS), .combine='rbind')%dopar%{
-        COMB <- COMBS[i, ]
+  	# iterate through each block combination, calculate correlation matrix
+  	# between blocks and store them in the preallocated matrix on both
+  	# symmetric sides of the diagonal
+	`%dopar%` <- foreach::`%dopar%`
+	results <- foreach:::foreach(i = 1:nrow(COMBS), .combine='rbind')%dopar%{
+		COMB <- COMBS[i, ]
         G1 <- SPLIT[[COMB[1]]] - 1
         G2 <- SPLIT[[COMB[2]]] - 1
-        #if (verbose) cat("Block", COMB[1], "with Block", COMB[2], "\n")
         flush.console()
         G1M = getColfromStdGenoMultiMarkersMat(G1)
         G2M = getColfromStdGenoMultiMarkersMat(G2)
-#	cat("G1M ", dim(G1M), "\n")
-#	cat("G2M ", dim(G2M), "\n")
         GRM <- t(G1M)%*%(G2M)
-#	cat("G1M: ", G1M, "\n")
-#	cat("G2M: ", G2M, "\n")
-#	cat("GRM: ", GRM, "\n")
-        if(sum(G1 != G2) == 0){
-                GRM[lower.tri(GRM, diag = FALSE)] = 0
+
+		if (sum(G1 != G2) == 0){
+			GRM[lower.tri(GRM, diag = FALSE)] = 0
         }
         GRM <- GRM/NROW
         indice <- which(GRM >= relatednessCutoff, arr.ind=T)
-#	cat("GRM[1:10,1:10]: ", GRM[1:10,1:10], "\n")
-#	cat("relatednessCutoff: ", relatednessCutoff, "\n")
-#	cat("indice: ", indice, "\n")
+
         cbind(G1[indice[,1]], G2[indice[,2]])
-#       resultsIVec =c(resultsIVec, G1[indice[,1]])
-#        resultsJVec =c(resultsJVec, G2[indice[,2]])
-        #corMAT[G1, G2] <- COR
-        #corMAT[G2, G1] <- t(COR)
-#       GRM <- NULL
-#       indice = NULL
-}
-  #gc()
-  return(results)
-}
-
-
-#refineKinPar = function(iMat, relatednessCutoff, W, tauVecNew, nblocks = 10, verbose = TRUE, ncore= 1){
-refineKinPar = function(relatednessCutoff, W, tauVecNew, nblocks = 10, verbose = TRUE, ncore= 1){
-
-	#chunk iMat
-  doParallel:::registerDoParallel(ncore)
-  NROW <- nrow(iMat)
-  SPLIT <- split(1:NROW, ceiling(seq_along(1:NROW)/(NROW%/%nblocks)))
-  GRMvec = rep(0, NROW)
-  print(length(GRMvec))
-  `%dopar%` <- foreach::`%dopar%`
-  mMarkers = gettotalMarker()
-  for(j in 1:mMarkers){
-    cat("j is ", j, "\n")
-    stdGeno = Get_OneSNP_StdGeno(j-1)
-    results <- foreach:::foreach(i = 1:length(SPLIT))%dopar%{
-        G1 <- SPLIT[[i]]
-	#print(G1)
-        if (verbose) cat("Block", i , "\n")
-        flush.console()
-	for(m in G1){
-		GRMvec[m] = GRMvec[m] + stdGeno[iMat[m,1]]*stdGeno[iMat[m,2]]/mMarkers
 	}
-  } 
- }
- return(GRMvec)		
-
+	
+	return(results)
 }
 
 
-#createSparseKinParallel = function(markerIndexVec, nblocks, ncore, relatednessCutoff, W, tauVecNew){
-createSparseKinParallel = function(nblocks, ncore, relatednessCutoff){
-  #get MAT
-  #MAT = Get_MultiMarkersBySample_StdGeno_Mat(markerIndexVec)  
-  #MAT = Get_MultiMarkersBySample_StdGeno_Mat()  
-  setRelatednessCutoff(relatednessCutoff)
-  Get_MultiMarkersBySample_StdGeno_Mat()  
-#  cat("dim(MAT) is ", dim(MAT), "\n")
-  tp0 = proc.time()
-#  indexVec = bigGRMPar(MAT, nblocks = nblocks, verbose = FALSE, ncore = nblocks, relatednessCutoff = relatednessCutoff)
-#  indexVec = bigGRMPar_new(nblocks = nblocks, verbose = TRUE, ncore = nblocks, relatednessCutoff = relatednessCutoff)
 
-  printComb(3)
-  #indexVec = findIndiceRelatedSample()
-  findIndiceRelatedSample()
-
-  #print(indexVec)
-  tp1 = proc.time()
-  cat("tp1 - tp0: ", tp1-tp0, "\n")
-#  cat(indexVec)
-  #sparseKinList = refineKin(indexVec-1, relatednessCutoff, W, tauVecNew)
-  sparseKinList = refineKin(relatednessCutoff)
-
-#  sparseKinList$kinValue = sparseKinList$kinValue * tauVecNew[2]
-
-  Nval = getNnomissingOut()
+refineKinPar = function(relatednessCutoff, W, tauVecNew, nblocks = 10, verbose = TRUE, ncore= 1){
+	#chunk iMat
+	doParallel:::registerDoParallel(ncore)
+	NROW <- nrow(iMat)
+	SPLIT <- split(1:NROW, ceiling(seq_along(1:NROW)/(NROW%/%nblocks)))
+	GRMvec = rep(0, NROW)
+	print(length(GRMvec))
+	`%dopar%` <- foreach::`%dopar%`
+	mMarkers = gettotalMarker()
 	
-  sparseKinList$iIndex = c(sparseKinList$iIndex, seq(1:Nval))
-  sparseKinList$jIndex = c(sparseKinList$jIndex, seq(1:Nval))
-#  diagKin = getDiagOfSigma(W, tauVecNew)
-#  diagKin = rep(1, Nval)
-  diagKin = get_DiagofKin()
-  sparseKinList$kinValue = c(sparseKinList$kinValue, diagKin)
-  #sparseKinList = refineKin(indexVec, relatednessCutoff, W, tauVecNew)
-  #GRMvec = refineKinPar(indexVec, relatednessCutoff = relatednessCutoff, W = W, tauVecNew = tauVecNew, nblocks = nblocks, verbose = TRUE, ncore= nblocks) 
-  #sparseKinList = shortenList(indexVec-1, GRMvec, relatednessCutoff, W, tauVecNew)
- tp2 = proc.time()
-  cat("tp2 - tp1: ", tp2-tp1, "\n")
-  return(sparseKinList)
+	for (j in 1:mMarkers){
+		cat("j is ", j, "\n")
+		stdGeno = Get_OneSNP_StdGeno(j-1)
+		results <- foreach:::foreach(i = 1:length(SPLIT))%dopar%{
+			G1 <- SPLIT[[i]]
+			if (verbose) cat("Block", i , "\n")
+			flush.console()
+			for (m in G1){
+				GRMvec[m] = GRMvec[m] + stdGeno[iMat[m,1]]*stdGeno[iMat[m,2]]/mMarkers
+			}
+		}
+	}
+	
+	return(GRMvec)
+}
+
+
+
+createSparseKinParallel = function(nblocks, ncore, relatednessCutoff){
+	#get MAT
+	#MAT = Get_MultiMarkersBySample_StdGeno_Mat(markerIndexVec)  
+	#MAT = Get_MultiMarkersBySample_StdGeno_Mat()
+	
+	setRelatednessCutoff(relatednessCutoff)
+	Get_MultiMarkersBySample_StdGeno_Mat()  
+	
+	tp0 = proc.time()
+	printComb(3)
+	findIndiceRelatedSample()
+	
+	tp1 = proc.time()
+	cat("tp1 - tp0: ", tp1-tp0, "\n")
+	sparseKinList = refineKin(relatednessCutoff)
+
+	Nval = getNnomissingOut()
+	sparseKinList$iIndex = c(sparseKinList$iIndex, seq(1:Nval))
+	sparseKinList$jIndex = c(sparseKinList$jIndex, seq(1:Nval))
+
+	diagKin = get_DiagofKin()
+	sparseKinList$kinValue = c(sparseKinList$kinValue, diagKin)
+	tp2 = proc.time()
+	cat("tp2 - tp1: ", tp2-tp1, "\n")
+	
+	return(sparseKinList)
 }
 
 
@@ -2433,247 +2384,225 @@ getSparseSigma = function(bedFile,
 		bimFile,
 		famFile,
 		outputPrefix="",
-                sparseGRMFile=NULL,
-                sparseGRMSampleIDFile="",
-                numRandomMarkerforSparseKin = 1000,
-                relatednessCutoff = 0.125,
+		sparseGRMFile=NULL,
+		sparseGRMSampleIDFile="",
+		numRandomMarkerforSparseKin = 1000,
+		relatednessCutoff = 0.125,
 		minMAFforGRM=0,
 		nThreads = 1, 
 		isDiagofKinSetAsOne = FALSE,
 		obj.glmm.null,
-                W, 
+        W, 
 		tauVecNew){
-
-  cat("sparse GRM will be used\n")
-  #cat("sparseGRMFile is ", sparseGRMFile, "\n")
-  #sparseGRMFile = paste0(outputPrefix, ".sparseGRM.mtx")
-  if(is.null(sparseGRMFile)){
-    cat("sparseGRMFile is not specified and the sparse GRM will be constructed\n")
-    outputPrefix1 = paste0(outputPrefix, "_allPlinksamples")
-    sparseGRMList = createSparseGRM(bedFile=bedFile, bimFile=bimFile, famFile=famFile, 
-    outputPrefix = outputPrefix1, 
-    numRandomMarkerforSparseKin = numRandomMarkerforSparseKin, 
-    relatednessCutoff = relatednessCutoff, 
-    isDiagofKinSetAsOne = isDiagofKinSetAsOne,
-    nThreads = nThreads, 
-    minMAFforGRM = minMAFforGRM, 
-    isSetGeno = FALSE,
-    isWritetoFiles = FALSE)
-    sparseGRM = sparseGRMList$sparseGRM
-    sparseGRMSampleID = data.frame(sampleID = sparseGRMList$sparseGRMSampleID)
-    colnames(sparseGRMSampleID) = c("sampleID") 
-    rm(sparseGRMList)
-    #sparseGRMFile = paste0(outputPrefix1,"_relatednessCutoff_",relatednessCutoff, "_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseGRM.mtx")
-    #cat("sparse GRM for all samples in the plink files is stored in ", sparseGRMFile, "\n")
-    #sparseGRMSampleIDFile = paste0(outputPrefix1,"_relatednessCutoff_",relatednessCutoff,"_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseGRM.mtx.sampleIDs.txt")
-    #cat("sample IDs for the constructed sparse GRM are stored in ", sparseGRMSampleIDFile, "\n")
-  }else{ # if(sparseGRMFile=="")
-    cat("sparse GRM has been specified\n")
-    cat("read in sparse GRM from ",sparseGRMFile,"\n")
-    sparseGRMLarge = Matrix:::readMM(sparseGRMFile)
-    #cat("sparseSigmaFile: ", sparseSigmaFile, "\n")
-    if(sparseGRMSampleIDFile != ""){
-      if(!file.exists(sparseGRMSampleIDFile)){
-        stop("ERROR! sparseSigmaSampleIDFile ", sparseGRMSampleIDFile, " does not exsit\n")
-      }else{
-        sparseGRMSampleID = data.frame(data.table:::fread(sparseGRMSampleIDFile, header=F, stringsAsFactors=FALSE, colClasses=c("character")))
-        colnames(sparseGRMSampleID) = c("sampleID")
-      } 
-    }else{#end of if(sparseSigmaSampleIDFile != "")
-      stop("ERROR! sparseSigmaSampleIDFile is not specified\n")
-    }
-  #}
-
-      sparseGRMSampleID$IndexGRM = c(1:nrow(sparseGRMSampleID))
-	cat("length(sparseGRMSampleID$IndexGRM): ", length(sparseGRMSampleID$IndexGRM), "\n")
-	cat("nrow(sparseGRMSampleID): ", nrow(sparseGRMSampleID), "\n")
-      sampleInModel = NULL
-      sampleInModel$IID = obj.glmm.null$sampleID
-      sampleInModel = data.frame(sampleInModel)
-      sampleInModel$IndexInModel = seq(1,length(sampleInModel$IID), by=1)
-      cat(nrow(sampleInModel), " samples have been used to fit the glmm null model\n")
-      mergeID = merge(sampleInModel, sparseGRMSampleID, by.x="IID", by.y = "sampleID")
-      mergeID = mergeID[with(mergeID, order(IndexInModel)), ]
-      print(dim(mergeID))
-      print(head(mergeID))
-      indexIDofGRM=mergeID$IndexGRM
-      #cat("indexIDofGRM = ", indexIDofGRM, "\n")
-      #cat("Subset sparse GRM to be ", indexIDofSigma," by ", indexIDofSigma, "\n")
-      sparseGRM = sparseGRMLarge[indexIDofGRM, indexIDofGRM]
-      rm(sparseGRMLarge)
-}
-  #sparseGRMFile = paste0(outputPrefix,"_relatednessCutoff_",relatednessCutoff, "_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseGRM.subset.mtx")
-  #cat("write sparse GRM to ", sparseGRMFile ,"\n")
-  #Matrix:::writeMM(sparseGRM, sparseGRMFile)
-  Nval = length(W)
-  sparseSigma = sparseGRM * tauVecNew[2]
-  #diag(sparseSigma) = getDiagOfSigma(W, tauVecNew)
-  diag(sparseSigma) = diag(sparseSigma) + (1/W)*tauVecNew[1]
-  #sparseSigmaFile = paste0(outputPrefix, "_relatednessCutoff_",relatednessCutoff, "_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseSigma.mtx")
-  #cat("write sparse Sigma to ", sparseSigmaFile ,"\n")
-  #Matrix:::writeMM(sparseSigma, sparseSigmaFile)
-  return(sparseSigma)
+	
+	cat("sparse GRM will be used\n")
+	if (is.null(sparseGRMFile)){
+		cat("sparseGRMFile is not specified and the sparse GRM will be constructed\n")
+		outputPrefix1 = paste0(outputPrefix, "_allPlinksamples")
+		sparseGRMList = createSparseGRM(bedFile = bedFile, bimFile = bimFile, famFile = famFile,
+										outputPrefix = outputPrefix1,
+										numRandomMarkerforSparseKin = numRandomMarkerforSparseKin,
+										relatednessCutoff = relatednessCutoff, 
+										isDiagofKinSetAsOne = isDiagofKinSetAsOne,
+										nThreads = nThreads, 
+										minMAFforGRM = minMAFforGRM,
+										isSetGeno = FALSE,
+										isWritetoFiles = FALSE)
+		
+		sparseGRM = sparseGRMList$sparseGRM
+		sparseGRMSampleID = data.frame(sampleID = sparseGRMList$sparseGRMSampleID)
+		colnames(sparseGRMSampleID) = c("sampleID")
+		rm(sparseGRMList)
+	}else{
+		cat("sparse GRM has been specified\n")
+		cat("read in sparse GRM from ",sparseGRMFile,"\n")
+		sparseGRMLarge = Matrix:::readMM(sparseGRMFile)
+		if (sparseGRMSampleIDFile != ""){
+			if(!file.exists(sparseGRMSampleIDFile)){
+				stop("ERROR! sparseSigmaSampleIDFile ", sparseGRMSampleIDFile, " does not exsit\n")
+			}else{
+				sparseGRMSampleID = data.frame(data.table:::fread(sparseGRMSampleIDFile, header=F, stringsAsFactors=FALSE, colClasses=c("character")))
+				colnames(sparseGRMSampleID) = c("sampleID")
+			}
+		}else{
+			stop("ERROR! sparseSigmaSampleIDFile is not specified\n")
+		}
+		
+		sparseGRMSampleID$IndexGRM = c(1:nrow(sparseGRMSampleID))
+		cat("length(sparseGRMSampleID$IndexGRM): ", length(sparseGRMSampleID$IndexGRM), "\n")
+		cat("nrow(sparseGRMSampleID): ", nrow(sparseGRMSampleID), "\n")
+		sampleInModel = NULL
+		sampleInModel$IID = obj.glmm.null$sampleID
+		sampleInModel = data.frame(sampleInModel)
+		sampleInModel$IndexInModel = seq(1,length(sampleInModel$IID), by=1)
+		cat(nrow(sampleInModel), " samples have been used to fit the glmm null model\n")
+		mergeID = merge(sampleInModel, sparseGRMSampleID, by.x="IID", by.y = "sampleID")
+		mergeID = mergeID[with(mergeID, order(IndexInModel)), ]
+		print(dim(mergeID))
+		print(head(mergeID))
+		indexIDofGRM=mergeID$IndexGRM
+		sparseGRM = sparseGRMLarge[indexIDofGRM, indexIDofGRM]
+		rm(sparseGRMLarge)
+	}
+	
+	# sparseGRMFile = paste0(outputPrefix,"_relatednessCutoff_",relatednessCutoff, "_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseGRM.subset.mtx")
+	# cat("write sparse GRM to ", sparseGRMFile ,"\n")
+	# Matrix:::writeMM(sparseGRM, sparseGRMFile)
+	Nval = length(W)
+	sparseSigma = sparseGRM * tauVecNew[2]
+	diag(sparseSigma) = diag(sparseSigma) + (1/W)*tauVecNew[1]
+	
+	# sparseSigmaFile = paste0(outputPrefix, "_relatednessCutoff_",relatednessCutoff, "_", numRandomMarkerforSparseKin, "_randomMarkersUsed.sparseSigma.mtx")
+	# cat("write sparse Sigma to ", sparseSigmaFile ,"\n")
+	# Matrix:::writeMM(sparseSigma, sparseSigmaFile)
+	
+	return(sparseSigma)
 }
 
 
 
-getsubGRM <- function (sparseGRMFile = NULL, sparseGRMSampleIDFile = "", relatednessCutoff,
-    modelID = NULL)
-{
-    cat("extract sparse GRM\n")
+getsubGRM <- function(sparseGRMFile = NULL, sparseGRMSampleIDFile = "", relatednessCutoff, modelID = NULL){
+	cat("extract sparse GRM\n")
     sparseGRMLarge = Matrix:::readMM(sparseGRMFile)
     print(nnzero(sparseGRMLarge))
-    cat("set elements in the sparse GRM <= ", relatednessCutoff,
-        " to zero\n")
-    sparseGRMLarge = Matrix:::drop0(sparseGRMLarge, tol = relatednessCutoff)
-        sparseGRMLarge = sparseGRMLarge * 1
+    cat("set elements in the sparse GRM <= ", relatednessCutoff, " to zero\n")
+    
+	sparseGRMLarge = Matrix:::drop0(sparseGRMLarge, tol = relatednessCutoff)
+	sparseGRMLarge = sparseGRMLarge * 1
     print(nnzero(sparseGRMLarge))
-    if (!file.exists(sparseGRMSampleIDFile)) {
-        stop("ERROR! sparseSigmaSampleIDFile ", sparseGRMSampleIDFile,
-            " does not exist\n")
-    }
-    else {
-        sparseGRMSampleID = data.frame(data.table:::fread(sparseGRMSampleIDFile,
-            header = F, stringsAsFactors = FALSE, colClasses = c("character")))
+    
+	if (!file.exists(sparseGRMSampleIDFile)){
+		stop("ERROR! sparseSigmaSampleIDFile ", sparseGRMSampleIDFile, " does not exist\n")
+    }else{
+        sparseGRMSampleID = data.frame(data.table:::fread(sparseGRMSampleIDFile, header = F, stringsAsFactors = FALSE, colClasses = c("character")))
         colnames(sparseGRMSampleID) = c("sampleID")
-        sparseGRMSampleID$IndexGRM = seq(1, nrow(sparseGRMSampleID),
-            by = 1)
+        sparseGRMSampleID$IndexGRM = seq(1, nrow(sparseGRMSampleID), by = 1)
         if (nrow(sparseGRMSampleID) != dim(sparseGRMLarge)[1] |
-            nrow(sparseGRMSampleID) != dim(sparseGRMLarge)[2]) {
-            stop("ERROR! number of samples in the sparse GRM is not the same to the number of sample IDs in the specified sparseGRMSampleIDFile ",
-                sparseGRMSampleIDFile, "\n")
-        }
-        else {
+            nrow(sparseGRMSampleID) != dim(sparseGRMLarge)[2]){
+			stop("ERROR! number of samples in the sparse GRM is not the same to the number of sample IDs in the specified sparseGRMSampleIDFile ", sparseGRMSampleIDFile, "\n")
+        }else{
             sampleInModel = NULL
             sampleInModel$IID = modelID
             sampleInModel = data.frame(sampleInModel)
-            sampleInModel$IndexInModel = seq(1, length(sampleInModel$IID),
-                by = 1)
+            sampleInModel$IndexInModel = seq(1, length(sampleInModel$IID), by = 1)
             cat(nrow(sampleInModel), " samples have been used to fit the glmm null model\n")
-            mergeID = merge(sampleInModel, sparseGRMSampleID,
-                by.x = "IID", by.y = "sampleID")
-            if (nrow(sampleInModel) > nrow(mergeID)) {
-                stop("ERROR: ", nrow(sampleInModel) - nrow(mergeID),
-                  "samples used for model fitting are not in the specified GRM\n")
-            }
-            else {
-                mergeID = mergeID[with(mergeID, order(IndexInModel)),
-                  ]
+            mergeID = merge(sampleInModel, sparseGRMSampleID, by.x = "IID", by.y = "sampleID")
+            if (nrow(sampleInModel) > nrow(mergeID)){
+				stop("ERROR: ", nrow(sampleInModel) - nrow(mergeID), "samples used for model fitting are not in the specified GRM\n")
+            }else{
+				mergeID = mergeID[with(mergeID, order(IndexInModel)),]
                 indexIDofGRM = mergeID$IndexGRM
                 sparseGRM = sparseGRMLarge[indexIDofGRM, indexIDofGRM]
                 rm(sparseGRMLarge)
                 return(sparseGRM)
             }
-        }
+		}
     }
 }
+
 
 
 checkPerfectSep<-function(formula, data, minCovariateCount){
-  X1<-model.matrix(formula,data=data)
-  X_name = colnames(X1)
-  X1 = as.matrix(X1[,-1])
-  X_name = X_name[-1]
-  colnames(X1) = X_name
-  formula.frame<-model.frame(formula,data=data)
-  Y = model.response(formula.frame, type = "any")
-  q = length(X_name)
-  colnamesDelete = c()
-  for(i in 1:q){
-    if (length(unique(X1[,i])) == 2){
-      sumTable = table(Y, X1[,i])
-      if(sum(sumTable < minCovariateCount) > 0){
-        colnamesDelete = c(colnamesDelete, X_name[i])
-	cat("less than ", minCovariateCount, " samples in a covariate  detected! ", X_name[i], " will be excluded in the model\n")
-      }  
-
-    #if(sum(sumTable == 0) > 0){
-    #    colnamesDelete = c(colnamesDelete, X_name[i])
-    #    cat("perfect seperation is detected! ", X_name[i], " will be excluded in the model\n")
-    #  }
-    }
-  }
-
-  return(colnamesDelete)
+	X1<-model.matrix(formula,data=data)
+	X_name = colnames(X1)
+	X1 = as.matrix(X1[,-1])
+	X_name = X_name[-1]
+	colnames(X1) = X_name
+	formula.frame<-model.frame(formula,data=data)
+	Y = model.response(formula.frame, type = "any")
+	q = length(X_name)
+	colnamesDelete = c()
+	for (i in 1:q){
+		if (length(unique(X1[,i])) == 2){
+			sumTable = table(Y, X1[,i])
+			if(sum(sumTable < minCovariateCount) > 0){
+				colnamesDelete = c(colnamesDelete, X_name[i])
+				cat("less than ", minCovariateCount, " samples in a covariate  detected! ", X_name[i], " will be excluded in the model\n")
+			}
+		}
+	}
+	
+	return(colnamesDelete)
 }
 
-ScoreTest_NULL_Model_binary=function (mu, y, X1){
-  V = as.vector(mu*(1-mu))
-  res = y - mu
-  n1 = length(res)
-  XV = t(X1 * V)
-  XVX = t(X1) %*% (X1 * V) 
-  XVX_inv = solve(XVX)
-  XXVX_inv = X1 %*% XVX_inv
-  S_a = colSums(X1 * res)
-  re = list(XV = XV, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, XVX = XVX, S_a = S_a, XVX_inv_XV = XXVX_inv * V)
-  class(re) = "SA_NULL"
-  return(re)
+
+
+ScoreTest_NULL_Model_binary = function(mu, y, X1){
+	V = as.vector(mu*(1-mu))
+	res = y - mu
+	n1 = length(res)
+	XV = t(X1 * V)
+	XVX = t(X1) %*% (X1 * V) 
+	XVX_inv = solve(XVX)
+	XXVX_inv = X1 %*% XVX_inv
+	S_a = colSums(X1 * res)
+	re = list(XV = XV, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, XVX = XVX, S_a = S_a, XVX_inv_XV = XXVX_inv * V)
+	class(re) = "SA_NULL"
+	
+	return(re)
 }
+
+
 
 extractVarianceRatio = function(obj.glmm.null,
-                                                    obj.glm.null,
-                                                    maxiterPCG = 500,
-                                                    tolPCG = 0.01,
-                                                    numMarkers,
-                                                    varRatioOutFile,
-                                                    ratioCVcutoff,
-                                                    testOut,
-                                                    bedFile,
-						    bimFile,
-						    famFile,
-                                                    chromosomeStartIndexVec,
-                                                    chromosomeEndIndexVec,
-                                                    isCateVarianceRatio,
-                                                    cateVarRatioIndexVec,
-                                                    useSparseGRMforVarRatio,
-                                                    sparseGRMFile,
-                                                    sparseGRMSampleIDFile,
-                                                    numRandomMarkerforSparseKin,
-                                                    relatednessCutoff,
-                                                    useSparseGRMtoFitNULL,
-                                                    nThreads,
-                                                    cateVarRatioMinMACVecExclude,
-                                                    cateVarRatioMaxMACVecInclude,
-                                                    minMAFforGRM,
-                                                    isDiagofKinSetAsOne,
-                                                    includeNonautoMarkersforVarRatio,
-						    pcgforUhatforSurvAnalysis){
+								obj.glm.null,
+								maxiterPCG = 500,
+								tolPCG = 0.01,
+								numMarkers,
+								varRatioOutFile,
+								ratioCVcutoff,
+								testOut,
+								bedFile,
+								bimFile,
+								famFile,
+								chromosomeStartIndexVec,
+								chromosomeEndIndexVec,
+								isCateVarianceRatio,
+								cateVarRatioIndexVec,
+								useSparseGRMforVarRatio,
+								sparseGRMFile,
+								sparseGRMSampleIDFile,
+								numRandomMarkerforSparseKin,
+								relatednessCutoff,
+								useSparseGRMtoFitNULL,
+								nThreads,
+								cateVarRatioMinMACVecExclude,
+								cateVarRatioMaxMACVecInclude,
+								minMAFforGRM,
+								isDiagofKinSetAsOne,
+								includeNonautoMarkersforVarRatio,
+								pcgforUhatforSurvAnalysis){
+	
+	obj.noK = obj.glmm.null$obj.noK
+	if (file.exists(testOut)){file.remove(testOut)}
+	bimPlink = data.frame(data.table:::fread(bimFile, header=F))
 
-  obj.noK = obj.glmm.null$obj.noK
-  if(file.exists(testOut)){file.remove(testOut)}
-  bimPlink = data.frame(data.table:::fread(bimFile, header=F))
-  #if(sum(sapply(bimPlink[,1], is.numeric)) != nrow(bimPlink)){
-  #  stop("ERROR: chromosome column in plink bim file is not numeric!\n")
-  #}
-
-  family = obj.glm.null$family
-  print(family)
-  eta = obj.glmm.null$linear.predictors
-  mu = obj.glmm.null$fitted.values
-  X = obj.glmm.null$X
-  y = obj.glm.null$y
-  tauVecNew = obj.glmm.null$theta
-  
-  if(obj.glmm.null$traitType != "survival"){ 
-    mu.eta = family$mu.eta(eta)
-    sqrtW = mu.eta/sqrt(obj.glm.null$family$variance(mu))
-    W = sqrtW^2   ##(mu*(1-mu) for binary)
-  }else{
-     W = as.vector(mu)
-     inC = GetIndexofCases(y, obj.glmm.null$eventTime)
-     gc()
-     Lambda0 = obj.glmm.null$Lambda0
-     Dvec = GetdenominN(inC$uniqTimeIndex, eta, inC$timedata$newIndexWithTies, inC$caseIndexwithTies, inC$timedata$orgIndex)
-     #print(gc())
-     #print(nrow(inC$timedata))
-     #print(length(inC$uniqTimeIndex))
-     RmatIndex = t(sapply(1:nrow(inC$timedata), Getrmat_indexvec_new, inC))
-     RmatIndex = RmatIndex[order(RmatIndex[,1]),]
-     RvecIndex =  RmatIndex[order(RmatIndex[,1]),2]
-     rm(RmatIndex)
-     DvecCumSum = cumsum(Dvec)
-     diagofWminusUinv = ((((exp(eta))^2) * (DvecCumSum[RvecIndex]))*(1/W) + 1)*(1/W)
+	family = obj.glm.null$family
+	print(family)
+	eta = obj.glmm.null$linear.predictors
+	mu = obj.glmm.null$fitted.values
+	X = obj.glmm.null$X
+	y = obj.glm.null$y
+	tauVecNew = obj.glmm.null$theta
+	
+	if (obj.glmm.null$traitType != "survival"){
+		mu.eta = family$mu.eta(eta)
+		sqrtW = mu.eta/sqrt(obj.glm.null$family$variance(mu))
+		W = sqrtW^2
+	}else{
+		W = as.vector(mu)
+		inC = GetIndexofCases(y, obj.glmm.null$eventTime, obj.glmm.null$entryTime)    ### add 'entryTime'
+		gc()
+		Lambda0 = obj.glmm.null$Lambda0
+		
+		Dvec = GetdenominN(inC$uniqTimeIndex, eta, inC$timedata$newIndexWithTies, inC$caseIndexwithTies, inC$timedata$orgIndex, inC$timedata$time, inC$timedata$entryTime)    # add 'time' and 'entryTime'
+		
+		RmatIndex = t(sapply(1:nrow(inC$timedata), Getrmat_indexvec_new, inC))
+		RmatIndex = RmatIndex[order(RmatIndex[,1]),]
+		RvecIndex =  RmatIndex[order(RmatIndex[,1]),2]
+		rm(RmatIndex)
+		DvecCumSum = cumsum(Dvec)
+		diagofWminusUinv = ((((exp(eta))^2) * (DvecCumSum[RvecIndex]))*(1/W) + 1)*(1/W)
 
      Nvec = exp(eta)
      print(pcgforUhatforSurvAnalysis)
