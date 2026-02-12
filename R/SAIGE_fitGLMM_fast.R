@@ -953,13 +953,14 @@ solveSpMatrixUsingArma = function(sparseGRMtest){
 #' @param isCovariateOffset logical. Whether to estimate fixed effect coeffciets. By default, FALSE.  
 #' @return a file ended with .rda that contains the glmm model information, a file ended with .varianceRatio.txt that contains the variance ratio values, and a file ended with #markers.SPAOut.txt that contains the SPAGMMAT tests results for the markers used for estimating the variance ratio.
 #' @export
-fitNULLGLMM = function(plinkFile = "",
+fitNULLGLMM = function(plinkFile = "",			   
 		bedFile="",
 		bimFile="",
 		famFile="",
                 phenoFile = "",
                 phenoCol = "",
                 eventTimeCol = "",
+				entryTimeCol = "",    ### add 'entryTimeCol'
                 eventTimeBinSize = NULL,
                 pcgforUhatforSurvAnalysis = TRUE,
                 traitType = "binary",
@@ -1009,208 +1010,200 @@ fitNULLGLMM = function(plinkFile = "",
 		SampleIDIncludeFile = "",
 		isCovariateOffset = FALSE,
 		skipVarianceRatioEstimation = FALSE, 
-		nrun = 30)
-{
+		nrun = 30){
 
-    #if traitType != "survival", ignore eventTimeCol
-    if(eventTimeCol != "" & traitType != "survival"){
-       stop("WARNING: eventTimeCol is specified but the traitType is not survival, survival analysis is NOT performed\n")
+
+	#if traitType != "survival", ignore eventTimeCol
+	if(eventTimeCol != "" & traitType != "survival"){
+		stop("WARNING: eventTimeCol is specified but the traitType is not survival, survival analysis is NOT performed\n")
     }
-
+	
     if(traitType != "survival"){
-    	eventTimeCol = ""
+		eventTimeCol = ""
+		entryTimeCol = ""    ### add 'entryTimeCol'
     }else{
-	isCovariateOffset = FALSE
-	cat("trait type is survival. Covariates are not included as offset\n")
+		isCovariateOffset = FALSE
+		cat("trait type is survival. Covariates are not included as offset\n")
     }
 
-
-
-
-    ##set up output files
+    # set up output files
     modelOut = paste0(outputPrefix, ".rda")
 
     if(skipModelFitting){
-       if(!file.exists(modelOut)){
-          stop("skipModelFitting=TRUE but ", modelOut, " does not exist\n")
-       }
-    }else{
-       if(LOCO & isLowMemLOCO){	   
-	  modelOut = paste(c(outputPrefix,"_noLOCO.rda"), collapse="")	
+		if(!file.exists(modelOut)){
+			stop("skipModelFitting=TRUE but ", modelOut, " does not exist\n")
+		}
+	}else{
+		if(LOCO & isLowMemLOCO){
+			modelOut = paste(c(outputPrefix,"_noLOCO.rda"), collapse="")
+		}
+		file.create(modelOut, showWarnings = TRUE)
 	}
-       file.create(modelOut, showWarnings = TRUE)
-    }
 
-    if(plinkFile != ""){
-	bimFile = paste0(plinkFile, ".bim")
-	bedFile = paste0(plinkFile, ".bed")
-	famFile = paste0(plinkFile, ".fam")
-    }
-
+	if(plinkFile != ""){
+		bimFile = paste0(plinkFile, ".bim")
+		bedFile = paste0(plinkFile, ".bed")
+		famFile = paste0(plinkFile, ".fam")
+	}
 
     if (useSparseGRMtoFitNULL & bedFile == ""){
-	cat("Sparse GRM is used to fit the null model and plink file is not specified, so variance ratios won't be estimated\n")    
-	skipVarianceRatioEstimation = TRUE
-    } 
+		cat("Sparse GRM is used to fit the null model and plink file is not specified, so variance ratios won't be estimated\n")    
+		skipVarianceRatioEstimation = TRUE
+    }
 
     if(!skipVarianceRatioEstimation){
-    	SPAGMMATOut = paste0(outputPrefix, "_", numMarkersForVarRatio, "markers.SAIGE.results.txt")
+		SPAGMMATOut = paste0(outputPrefix, "_", numMarkersForVarRatio, "markers.SAIGE.results.txt")
     	#Check_OutputFile_Create(SPAGMMATOut)
 
-    	if (outputPrefix_varRatio == "") {
-            outputPrefix_varRatio = outputPrefix
-    	}    
-    	varRatioFile = paste0(outputPrefix_varRatio, ".varianceRatio.txt")
+    	if (outputPrefix_varRatio == ""){
+			outputPrefix_varRatio = outputPrefix
+		}
+		varRatioFile = paste0(outputPrefix_varRatio, ".varianceRatio.txt")
 
-    	if (!file.exists(varRatioFile)) {
-            file.create(varRatioFile, showWarnings = TRUE)
-    	}else {
-            if (!IsOverwriteVarianceRatioFile) {
-            stop("WARNING: The variance ratio file ", varRatioFile, 
-            " already exists. The new variance ratios will be output to ", 
-            varRatioFile, ". In order to avoid overwriting the file, please remove the ", 
-            varRatioFile, " or use the argument outputPrefix_varRatio to specify a different prefix to output the variance ratio(s). Otherwise, specify --IsOverwriteVarianceRatioFile=TRUE so the file will be overwritten with new variance ratio(s)\n")
+		if (!file.exists(varRatioFile)){
+			file.create(varRatioFile, showWarnings = TRUE)
+		}else{
+			if (!IsOverwriteVarianceRatioFile){
+				stop("WARNING: The variance ratio file ", varRatioFile,
+					 " already exists. The new variance ratios will be output to ",
+					 varRatioFile, ". In order to avoid overwriting the file, please remove the ",
+					 varRatioFile, " or use the argument outputPrefix_varRatio to specify a different prefix to output the variance ratio(s). Otherwise, specify --IsOverwriteVarianceRatioFile=TRUE so the file will be overwritten with new variance ratio(s)\n")
             }else{
-                cat("The variance ratio file ", varRatioFile, " already exists. IsOverwriteVarianceRatioFile=TRUE so the file will be overwritten\n")
-            }
-        }
-    }else{
-	cat("Variance ratio estimation will be skipped\n.")
-        useSparseGRMforVarRatio = FALSE
-    }
+				cat("The variance ratio file ", varRatioFile, " already exists. IsOverwriteVarianceRatioFile=TRUE so the file will be overwritten\n")
+			}
+		}
+	}else{
+		cat("Variance ratio estimation will be skipped\n.")
+		useSparseGRMforVarRatio = FALSE
+	}
 
 
     if (useSparseGRMtoFitNULL){
-        #useSparseGRMforVarRatio = FALSE
-        LOCO = FALSE
-	nThreads = 1
-	if(bedFile != ""){
-	  cat("sparse GRM will be used to fit the NULL model and nThreads is set to 1\n")
+		#useSparseGRMforVarRatio = FALSE
+		LOCO = FALSE
+		nThreads = 1
+		
+		if(bedFile != ""){
+			cat("sparse GRM will be used to fit the NULL model and nThreads is set to 1\n")
+		}
+		
+		cat("Leave-one-chromosome-out is not applied\n")
 	}
-	cat("Leave-one-chromosome-out is not applied\n")
-    }
 
 
-    if (useSparseGRMtoFitNULL | useSparseGRMforVarRatio) {
-        if (!file.exists(sparseGRMFile)) {
-            stop("sparseGRMFile ", sparseGRMFile, " does not exist!")
-        }
-        if (!file.exists(sparseGRMSampleIDFile)) {
-            stop("sparseGRMSampleIDFile ", sparseGRMSampleIDFile, 
-                " does not exist!")
+	if (useSparseGRMtoFitNULL | useSparseGRMforVarRatio){
+		if (!file.exists(sparseGRMFile)) {
+			stop("sparseGRMFile ", sparseGRMFile, " does not exist!")
+		}
+		if (!file.exists(sparseGRMSampleIDFile)) {
+			stop("sparseGRMSampleIDFile ", sparseGRMSampleIDFile, " does not exist!")
         }
     }
 
 
-    if (nThreads > 1) {
-        RcppParallel:::setThreadOptions(numThreads = nThreads)
+    if (nThreads > 1){
+		RcppParallel:::setThreadOptions(numThreads = nThreads)
         cat(nThreads, " threads will be used ", "\n")
     }
 
-    if (FemaleOnly & MaleOnly) {
-        stop("Both FemaleOnly and MaleOnly are TRUE. Please specify only one of them as TRUE to run the sex-specific job\n")
+    if (FemaleOnly & MaleOnly){
+		stop("Both FemaleOnly and MaleOnly are TRUE. Please specify only one of them as TRUE to run the sex-specific job\n")
     }
     
-    if (FemaleOnly) {
-        outputPrefix = paste0(outputPrefix, "_FemaleOnly")
-        cat("Female-specific model will be fitted. Samples coded as ", 
-            FemaleCode, " in the column ", sexCol, " in the phenotype file will be included\n")
-    }else if (MaleOnly) {
+    if (FemaleOnly){
+		outputPrefix = paste0(outputPrefix, "_FemaleOnly")
+        cat("Female-specific model will be fitted. Samples coded as ",
+			FemaleCode, " in the column ", sexCol, " in the phenotype file will be included\n")
+    }else if (MaleOnly){
         outputPrefix = paste0(outputPrefix, "_MaleOnly")
         cat("Male-specific model will be fitted. Samples coded as ", 
             MaleCode, " in the column ", sexCol, " in the phenotype file will be included\n")
     }
 
     if (!useSparseGRMtoFitNULL  | !skipVarianceRatioEstimation){
-        if (!file.exists(bedFile)) {
-            stop("ERROR! bed file does not exsit\n")
+		if (!file.exists(bedFile)){
+			stop("ERROR! bed file does not exsit\n")
         }
-        if (!file.exists(bimFile)) {
+        if (!file.exists(bimFile)){
             stop("ERROR! bim file does not exsit\n")
-        }else {
-            if (LOCO){
-  		chrVec = data.table:::fread(bimFile, header = F, data.table=F , select = 1)
-  		updatechrList = updateChrStartEndIndexVec(chrVec)
-  		LOCO = updatechrList$LOCO
-  		chromosomeStartIndexVec = updatechrList$chromosomeStartIndexVec
-  		chromosomeEndIndexVec = updatechrList$chromosomeEndIndexVec
-            }	    
-	    if(!LOCO) {
-                chromosomeStartIndexVec = rep(NA, 22)
-                chromosomeEndIndexVec = rep(NA, 22)
-            }
-        }
-
-
-        if (!file.exists(famFile)) {
-            stop("ERROR! fam file does not exsit\n")
         }else{
-            sampleListwithGenov0 = data.table:::fread(famFile, header = F, , colClasses = list(character = 1:4))
+			if (LOCO){
+				chrVec = data.table:::fread(bimFile, header = F, data.table=F , select = 1)
+				updatechrList = updateChrStartEndIndexVec(chrVec)
+				LOCO = updatechrList$LOCO
+				chromosomeStartIndexVec = updatechrList$chromosomeStartIndexVec
+				chromosomeEndIndexVec = updatechrList$chromosomeEndIndexVec
+			}
+			if(!LOCO){
+				chromosomeStartIndexVec = rep(NA, 22)
+				chromosomeEndIndexVec = rep(NA, 22)
+			}
+		}
+
+        if (!file.exists(famFile)){
+			stop("ERROR! fam file does not exsit\n")
+		}else{
+			sampleListwithGenov0 = data.table:::fread(famFile, header = F, , colClasses = list(character = 1:4))
             sampleListwithGenov0 = data.frame(sampleListwithGenov0)
-            colnames(sampleListwithGenov0) = c("FIDgeno", "IIDgeno", 
-                "father", "mother", "sex", "phe")
+            colnames(sampleListwithGenov0) = c("FIDgeno", "IIDgeno", "father", "mother", "sex", "phe")
             sampleListwithGeno = NULL
             sampleListwithGeno$IIDgeno = sampleListwithGenov0$IIDgeno
             sampleListwithGeno = data.frame(sampleListwithGeno)
-            sampleListwithGeno$IndexGeno = seq(1, nrow(sampleListwithGeno), 
-                by = 1)
+            sampleListwithGeno$IndexGeno = seq(1, nrow(sampleListwithGeno), by = 1)
             cat(nrow(sampleListwithGeno), " samples have genotypes\n")
-        }
-    }else{
-        sampleListwithGenov0 = data.table:::fread(sparseGRMSampleIDFile, 
+		}
+	}else{
+		sampleListwithGenov0 = data.table:::fread(sparseGRMSampleIDFile, 
         header = F, , colClasses = c("character"), data.table = F)
         colnames(sampleListwithGenov0) = c("IIDgeno")
         sampleListwithGeno = NULL
         sampleListwithGeno$IIDgeno = sampleListwithGenov0$IIDgeno
         sampleListwithGeno = data.frame(sampleListwithGeno)
-        sampleListwithGeno$IndexGeno = seq(1, nrow(sampleListwithGeno), 
-            by = 1)
+        sampleListwithGeno$IndexGeno = seq(1, nrow(sampleListwithGeno), by = 1)
         cat(nrow(sampleListwithGeno), " samples are in the sparse GRM\n")	
-    }	    
+    }
 
 
-    if (!file.exists(phenoFile)) {
-        stop("ERROR! phenoFile ", phenoFile, " does not exsit\n")
+	if (!file.exists(phenoFile)){
+		stop("ERROR! phenoFile ", phenoFile, " does not exsit\n")
     }else{
-        if (grepl(".gz$", phenoFile) | grepl(".bgz$", phenoFile)) {
-            data = data.table:::fread(cmd = paste0("gunzip -c ", 
-                phenoFile), header = T, stringsAsFactors = FALSE, 
-                colClasses = list(character = sampleIDColinphenoFile), data.table=F)
+		if (grepl(".gz$", phenoFile) | grepl(".bgz$", phenoFile)){
+			data = data.table:::fread(cmd = paste0("gunzip -c ", phenoFile), header = T,
+									  stringsAsFactors = FALSE, colClasses = list(character = sampleIDColinphenoFile), data.table=F)
         }
-        else {
-            data = data.table:::fread(phenoFile, header = T, 
-                stringsAsFactors = FALSE, colClasses = list(character = sampleIDColinphenoFile), data.table=F)
+		else{
+			data = data.table:::fread(phenoFile, header = T, 
+									  stringsAsFactors = FALSE, colClasses = list(character = sampleIDColinphenoFile), data.table=F)
         }
-        #data = data.frame(ydat)
-        for (i in c(phenoCol, covarColList, sampleIDColinphenoFile)) {
-            if (!(i %in% colnames(data))) {
-                stop("ERROR! column for ", i, " does not exist in the phenoFile \n")
-            }
-	}    
-	
-	
-		if(eventTimeCol != ""){
-                    if(!(eventTimeCol %in% colnames(data))){
-                        stop("ERROR! eventTimeCol does not exsit in the phenoFile \n")
-                    }
 
-                    if(!is.null(eventTimeBinSize)){
-                        cat("eventTimeBinSize is specified, so event time will be grouped by bins with size ", eventTimeBinSize, "\n")
-                        minEventTime = min(data[,eventTimeCol])
-			cat("minEventTime ", minEventTime, "\n")
-                        data$eventTimeNew = (data[,eventTimeCol] - minEventTime) %/% eventTimeBinSize + 1
-                        data$eventTimeOrg = data[,eventTimeCol]
-                        data[,eventTimeCol] = data$eventTimeNew
-                    }
-		    data = data[,which(colnames(data) %in% c(phenoCol, covarColList, sampleIDColinphenoFile, eventTimeCol)), drop=F]	
-                }else{
-		    data = data[,which(colnames(data) %in% c(phenoCol, covarColList, sampleIDColinphenoFile)), drop=F]	
+		for (i in c(phenoCol, covarColList, sampleIDColinphenoFile)){
+			if (!(i %in% colnames(data))){
+				stop("ERROR! column for ", i, " does not exist in the phenoFile \n")
+			}
+		}
+	
+		if (eventTimeCol != ""){
+			if(!(eventTimeCol %in% colnames(data))){
+				stop("ERROR! eventTimeCol does not exsit in the phenoFile \n")
+			}
 
+			if(!is.null(eventTimeBinSize)){
+				cat("eventTimeBinSize is specified, so event time will be grouped by bins with size ", eventTimeBinSize, "\n")
+				minEventTime = min(data[,eventTimeCol])
+				cat("minEventTime ", minEventTime, "\n")
+				data$eventTimeNew = (data[,eventTimeCol] - minEventTime) %/% eventTimeBinSize + 1
+				data$eventTimeOrg = data[,eventTimeCol]
+				data[,eventTimeCol] = data$eventTimeNew
+			}
+			
+			data = data[,which(colnames(data) %in% c(phenoCol, covarColList, sampleIDColinphenoFile, eventTimeCol)), drop=F]}
+		else{
+			data = data[,which(colnames(data) %in% c(phenoCol, covarColList, sampleIDColinphenoFile)), drop=F]	
 		}
 
 		data = data[complete.cases(data),,drop=F]
 
-	if(SampleIDIncludeFile != ""){
+	if (SampleIDIncludeFile != ""){
 		if(!file.exists(SampleIDIncludeFile)){
 			stop("ERROR! SampleIDIncludeFile ", SampleIDIncludeFile, " does not exsit\n")
 		}else{
@@ -1440,9 +1433,7 @@ fitNULLGLMM = function(plinkFile = "",
 	    modwitcov = glm(formula.new, data = data.new,
                 family = gaussian(link = "identity"))	
     }
-    #if(!hasCovariate){ 		
-#	covoffset = rep(0,nrow(data.new))
-#    }	    
+
 
     if (isCovariateOffset) {
     	covoffset = mmat[,-1, drop=F] %*%  modwitcov$coefficients[-1] 
@@ -1627,7 +1618,6 @@ fitNULLGLMM = function(plinkFile = "",
 	}
 
             modglmm$useSparseGRMtoFitNULL = useSparseGRMtoFitNULL 
-            #save(modglmm, file = modelOut)
             tau = modglmm$theta
       
 	    alpha0 = modglmm$coefficients
