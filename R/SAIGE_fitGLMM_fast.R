@@ -820,86 +820,86 @@ glmmkin.ai_PCG_Rcpp_Quantitative = function(bedFile, bimFile, famFile, Xorig, is
 
 
 
-
-
 Saddle_Prob_q <-function(q, mu, g, tauVecNew){
-  m1 = sum(mu * g)
-  var2 = sum(g^2)
-  pval.noadj = pchisq(((q - m1)/tauVecNew[1])^2/var2, lower.tail = FALSE, df=1)
-  return(list(p.value = pval.noadj, p.value.NA = NA, Is.converge = NA, p1 = NA, p2 = NA))
+	m1 = sum(mu * g)
+	var2 = sum(g^2)
+	pval.noadj = pchisq(((q - m1)/tauVecNew[1])^2/var2, lower.tail = FALSE, df=1)
+	return(list(p.value = pval.noadj, p.value.NA = NA, Is.converge = NA, p1 = NA, p2 = NA))
 }
 
 
 
-#ScoreTest_wSaddleApprox_NULL_Model_q=function (formula, tau, data = NULL){
-ScoreTest_wSaddleApprox_NULL_Model_q=function (mu, y, X, tauVec){
-  V = rep(1/tauVec[1], length(y))
-  res = y - mu
-  n1 = length(res)
-  XV = t(X * V)
-  XVX = t(X) %*% (X * V)
-  XVX_inv = solve(XVX)
-  XXVX_inv = X1 %*% XVX_inv
-  XVX_inv_XV = XXVX_inv * V 
-  S_a =  colSums(X * res)
-  
-  re = list(XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, S_a = S_a, XVX_inv_XV = XVX_inv_XV)
-  class(re) = "SA_NULL"
-  return(re)
+ScoreTest_wSaddleApprox_NULL_Model_q = function (mu, y, X, tauVec){
+	V = rep(1/tauVec[1], length(y))
+	res = y - mu
+	n1 = length(res)
+	XV = t(X * V)
+	XVX = t(X) %*% (X * V)
+	XVX_inv = solve(XVX)
+	XXVX_inv = X1 %*% XVX_inv
+	XVX_inv_XV = XXVX_inv * V 
+	S_a =  colSums(X * res)
+	
+	re = list(XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, S_a = S_a, XVX_inv_XV = XVX_inv_XV)
+	class(re) = "SA_NULL"
+	
+	return(re)
 }
+
 
 
 ScoreTest_NULL_Model = function(mu, mu2, y, X){
-  V = as.vector(mu2)
-  res = as.vector(y - mu)
-  XV = t(X * V)
-  XVX = t(X) %*% (t(XV))
-  XVX_inv = solve(XVX)
-  XXVX_inv = X %*% XVX_inv
-  XVX_inv_XV = XXVX_inv * V
-  S_a =  colSums(X * res)
-  re = list(XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, S_a = S_a, XVX_inv_XV = XVX_inv_XV, V = V)
-  class(re) = "SA_NULL"
-  return(re) 
+	V = as.vector(mu2)
+	res = as.vector(y - mu)
+	XV = t(X * V)
+	XVX = t(X) %*% (t(XV))
+	XVX_inv = solve(XVX)
+	XXVX_inv = X %*% XVX_inv
+	XVX_inv_XV = XXVX_inv * V
+	S_a =  colSums(X * res)
+	
+	re = list(XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, S_a = S_a, XVX_inv_XV = XVX_inv_XV, V = V)
+	class(re) = "SA_NULL"
+	
+	return(re) 
 }	
 
-ScoreTest_NULL_Model_survival=function (mu, y, X1){
-  #X1 = model.matrix(formula, data = data)
-  #X1 = SPAtest:::ScoreTest_wSaddleApprox_Get_X1(X1)
-  #glmfit = glm(formula, data = data, family=gaussian(link = "identity"))
-  #mu = glmfit$fitted.values
-  #glmfit = glm(formula, data = data, family = "binomial")
-  V = as.vector(mu)
-  #res = glmfit$y - mu
-  res = as.vector(y - mu)
-  n1 = length(res)
-  #cat("dim(X1): ", dim(X1), "\n")
-  #cat("length(V): ", length(V), "\n")
-  XV = t(X1 * V)
-  #XVX_inv = solve(t(X1) %*% (X1 * V))
-  XVX = t(X1) %*% (t(XV))
-  XVX_inv = solve(XVX)
-  XXVX_inv = X1 %*% XVX_inv
-  XVX_inv_XV = XXVX_inv * V
-  ###for G_tilde_c
-  X1_fg = cbind(X1, 1)
-  XV_fg = t(X1_fg * V)
-  XVX_fg = t(X1_fg) %*% (t(XV_fg)) 
-  XVX_inv_fg = solve(XVX_fg)
-  XXVX_inv_fg = X1_fg %*% XVX_inv_fg
-  XVX_inv_XV_fg = XXVX_inv_fg * V
 
-  S_a =  colSums(X1_fg * res)
 
-  re = list(y = y, mu = mu, res = res, V = V, X1 = X1, XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, XVX_inv_XV = XVX_inv_XV, X1_fg = X1_fg, XV_fg = XV_fg, XVX_fg = XVX_fg, XXVX_inv_fg = XXVX_inv_fg, XVX_inv_fg = XVX_inv_fg, XVX_inv_XV_fg = XVX_inv_XV_fg, S_a = S_a)
-  #re = list(y = y, mu = mu, res = res, V = V, X1 = X1, XV = XV, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv)
-  class(re) = "SA_NULL"
-  return(re)
+ScoreTest_NULL_Model_survival = function(mu, y, X1){
+	V = as.vector(mu)
+	res = as.vector(y - mu)
+	n1 = length(res)
+	
+	XV = t(X1 * V)
+	XVX = t(X1) %*% (t(XV))
+	XVX_inv = solve(XVX)
+	XXVX_inv = X1 %*% XVX_inv
+	XVX_inv_XV = XXVX_inv * V
+	
+	# for G_tilde_c
+	X1_fg = cbind(X1, 1)
+	XV_fg = t(X1_fg * V)
+	XVX_fg = t(X1_fg) %*% (t(XV_fg)) 
+	XVX_inv_fg = solve(XVX_fg)
+	XXVX_inv_fg = X1_fg %*% XVX_inv_fg
+	XVX_inv_XV_fg = XXVX_inv_fg * V
+	
+	S_a =  colSums(X1_fg * res)
+	
+	re = list(y = y, mu = mu, res = res, V = V, X1 = X1, XV = XV, XVX = XVX, XXVX_inv = XXVX_inv, XVX_inv = XVX_inv, XVX_inv_XV = XVX_inv_XV,
+			  X1_fg = X1_fg, XV_fg = XV_fg, XVX_fg = XVX_fg, XXVX_inv_fg = XXVX_inv_fg, XVX_inv_fg = XVX_inv_fg, XVX_inv_XV_fg = XVX_inv_XV_fg, S_a = S_a)
+
+	class(re) = "SA_NULL"
+	
+	return(re)
 }
 
+
+
 solveSpMatrixUsingArma = function(sparseGRMtest){
-  m4 = gen_sp_v2(sparseGRMtest)
-  return(m4)
+	m4 = gen_sp_v2(sparseGRMtest)
+	return(m4)
 }
 
 
