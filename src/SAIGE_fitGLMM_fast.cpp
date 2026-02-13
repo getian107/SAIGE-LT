@@ -2323,7 +2323,9 @@ struct CorssProd_UandbVec_surv : public Worker
 {
         // source vectors
         arma::fcolvec n_bVec;
-        arma::fcolvec n_RvecIndex;
+        // arma::fcolvec n_RvecIndex;
+		arma::fcolvec n_RvecStartIndex;    ///T modified by Tian on Feb 13, 2026
+		arma::fcolvec n_RvecEndIndex;    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec n_NVec;
         arma::fcolvec n_sqrtDVec;
         //unsigned int k_uniqTime;
@@ -2332,13 +2334,17 @@ struct CorssProd_UandbVec_surv : public Worker
         unsigned int m_N;
 
         // constructors
-        CorssProd_UandbVec_surv(arma::fcolvec & x, arma::fvec & y,  arma::fvec & z,  arma::fvec & q)
-                : n_bVec(x),n_RvecIndex(y),n_NVec(z),n_sqrtDVec(q) {
+        // CorssProd_UandbVec_surv(arma::fcolvec & x, arma::fvec & y,  arma::fvec & z,  arma::fvec & q)
+				// : n_bVec(x),n_RvecIndex(y),n_NVec(z),n_sqrtDVec(q) {
+		CorssProd_UandbVec_surv(arma::fvec & x, arma::fvec & yStart, arma::fvec & yEnd, arma::fvec & z, arma::fvec & q)    ///T modified by Tian on Feb 13, 2026
+				: n_bVec(x), n_RvecStartIndex(yStart), n_RvecEndIndex(yEnd), n_NVec(z), n_sqrtDVec(q) {
                   m_N = geno.getNnomissing();
                   m_bout.zeros(m_N);
         }
-        CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)
-                : n_bVec(CorssProd_UandbVec_surv.n_bVec),n_RvecIndex(CorssProd_UandbVec_surv.n_RvecIndex),n_NVec(CorssProd_UandbVec_surv.n_NVec),n_sqrtDVec(CorssProd_UandbVec_surv.n_sqrtDVec)
+        // CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)
+        //         : n_bVec(CorssProd_UandbVec_surv.n_bVec),n_RvecIndex(CorssProd_UandbVec_surv.n_RvecIndex),n_NVec(CorssProd_UandbVec_surv.n_NVec),n_sqrtDVec(CorssProd_UandbVec_surv.n_sqrtDVec)
+		CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)
+	    		: n_bVec(CorssProd_UandbVec_surv.n_bVec),n_RvecStartIndex(CorssProd_UandbVec_surv.n_RvecStartIndex),n_RvecEndIndex(CorssProd_UandbVec_surv.n_RvecEndIndex),n_NVec(CorssProd_UandbVec_surv.n_NVec),n_sqrtDVec(CorssProd_UandbVec_surv.n_sqrtDVec)
         {
                 m_N = CorssProd_UandbVec_surv.m_N;
                 m_bout.zeros(m_N);
@@ -2355,7 +2361,8 @@ struct CorssProd_UandbVec_surv : public Worker
                         //nthsample = i;
                         //ktime=n_RvecIndex(i);
                         //vec.zeros(k_uniqTime);
-                        extractUvecforkthTime(i, n_RvecIndex, n_NVec, n_sqrtDVec, vec);
+                        // extractUvecforkthTime(i, n_RvecIndex, n_NVec, n_sqrtDVec, vec);
+						extractUvecforkthTime(i, n_RvecStartIndex, n_RvecEndIndex, n_NVec, n_sqrtDVec, vec);    ///T modified by Tian on Feb 13, 2026
                         //for(unsigned int j = 0; j < ktime; j++){
                         //        vec(j) = n_Dvec(j)*n_sqrtWinvNVec(i);
                         //}
