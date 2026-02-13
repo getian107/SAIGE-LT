@@ -2599,6 +2599,12 @@ extractVarianceRatio = function(obj.glmm.null,
 		inC = GetIndexofCases(y, obj.glmm.null$eventTime, obj.glmm.null$entryTime)    ### add 'entryTime'
 		gc()
 		Lambda0 = obj.glmm.null$Lambda0
+
+		### guard against Lambda0 <= 0
+		idx_zero = which(Lambda0 <= 0 | !is.finite(Lambda0))
+		if (length(idx_zero) > 0){
+			stop("ERROR! Lambda0(T)-Lambda0(L) is 0 or infinite for ", length(idx_zero), " individuals. Please remove these individuals.\n")
+		}
 		
 		Dvec = GetdenominN(inC$uniqTimeIndex, eta, inC$timedata$newIndexWithTies, inC$caseIndexwithTies, inC$timedata$orgIndex, inC$timedata$time, inC$timedata$entryTime)    # add 'time' and 'entryTime'
 
