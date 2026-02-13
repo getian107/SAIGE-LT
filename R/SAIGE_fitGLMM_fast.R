@@ -1,10 +1,9 @@
-### Modified by Tian on Feb 10, 2026
-### Modified to account for left truncation
-### Assume top-level code provides a vector - 'entryTime'
+### Modified by Tian on Feb 10 - Feb 12, 2026 to account for left truncation
 ### Delayed entry risk set is defined as R(t) = {j: L_j < t <= T_j}
 ###
-### Key modifications: (i) risk set definition; (ii) mean function mu
+### Key modifications: (i) risk set definition; (ii) mean function mu = [Lambda0(t_i)-Lambda0(l_i)]*exp(eta)
 ### All modifications annotated by '###'
+
 
 GetIndexofCases = function(status, time, entryTime = NULL){    ### add 'entryTime'
 
