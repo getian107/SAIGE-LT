@@ -2281,12 +2281,7 @@ arma::fvec extractVecatTimek(unsigned int k0, arma::fvec & RvecStartIndex, arma:
 
 ///T modified by Tian on Feb 13, 2026
 // [[Rcpp::export]]
-void extractUvecforkthTime(unsigned int k0,
-                           arma::fvec & RvecStartIndex,
-                           arma::fvec & RvecEndIndex,
-                           arma::fvec & NVec,
-                           arma::fvec & sqrtDVec,
-                           arma::fvec & kthVec){
+void extractUvecforkthTime(unsigned int k0, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fvec & kthVec){
 
 		unsigned int n = NVec.n_elem;
 		kthVec.zeros(n);
@@ -2378,58 +2373,34 @@ struct CorssProd_UandbVec_surv : public Worker
 
 
 
-// [[Rcpp::export]]
+[[Rcpp::export]]
 // arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, arma::fvec& NVec,  arma::fvec & sqrtDVec) {
+arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDVec) {    ///T modified by Tian on Feb 13, 2026
 
-// //  // declare the InnerProduct instance that takes a pointer to the vector data
-//         unsigned int ktime = sqrtDVec.n_elem;
-//         CorssProd_UandbVec_surv  CorssProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
-//         //int m_N = geno.getNnomissing();
+//  // declare the InnerProduct instance that takes a pointer to the vector data
+        unsigned int ktime = sqrtDVec.n_elem;
+        // CorssProd_UandbVec_surv  CorssProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
+		CorssProd_UandbVec_surv CorssProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);    ///T modified by Tian on Feb 13, 2026
+        //int m_N = geno.getNnomissing();
 
-// //  // call paralleReduce to start the work
-//         parallelReduce(0, ktime, CorssProd_UandbVec_surv);
+//  // call paralleReduce to start the work
+        parallelReduce(0, ktime, CorssProd_UandbVec_surv);
 
-//         return CorssProd_UandbVec_surv.m_bout;
-// }
-
-///T modified by Tian on Feb 13, 2026
-// [[Rcpp::export]]
-arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec,
-                                           arma::fvec & RvecStartIndex,
-                                           arma::fvec & RvecEndIndex,
-                                           arma::fvec & NVec,
-                                           arma::fvec & sqrtDVec) {
-	
-    unsigned int ktime = sqrtDVec.n_elem;
-    CorssProd_UandbVec_surv CorssProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);
-    parallelReduce(0, ktime, CorssProd_UandbVec_surv);
-    return CorssProd_UandbVec_surv.m_bout;
+        return CorssProd_UandbVec_surv.m_bout;
 }
 
 
 
-// [[Rcpp::export]]
+[[Rcpp::export]]
 // arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, arma::fvec& NVec, arma::fvec& sqrtDVec, arma::fvec& wVec){
-//         //unsigned int nsample = geno.getNnomissing();
-//         //unsigned int kuniqtime = Dvec.n_elem;
+arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec& NVec, arma::fvec& sqrtDVec, arma::fvec& wVec){    ///T modified by Tian on Feb 13, 2026
+        //unsigned int nsample = geno.getNnomissing();
+        //unsigned int kuniqtime = Dvec.n_elem;
 
-//         arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
-//         arma::fcolvec WminusUb = wVec % bVec - Ub;
-//         return WminusUb;
-// }
-
-///T modified by Tian on Feb 13, 2026
-// [[Rcpp::export]]
-arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec,
-									arma::fvec & RvecStartIndex,
-									arma::fvec & RvecEndIndex,
-									arma::fvec& NVec,
-									arma::fvec& sqrtDVec,
-									arma::fvec& wVec){
-	
-    arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);
-    arma::fcolvec WminusUb = wVec % bVec - Ub;
-    return WminusUb;
+        // arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
+		arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);    ///T modified by Tian on Feb 13, 2026
+        arma::fcolvec WminusUb = wVec % bVec - Ub;
+        return WminusUb;
 }
 
 
@@ -2535,7 +2506,7 @@ struct CorssProd_WinvNRttandVec : public Worker
                 m_bout.zeros(k_uniTime);
         }
 
-           // process just the elements of the range I've been asked to
+        // process just the elements of the range I've been asked to
         void operator()(std::size_t begin, std::size_t end) {
                 arma::fvec vec;
                 float val1;
@@ -2554,6 +2525,8 @@ struct CorssProd_WinvNRttandVec : public Worker
         m_bout += rhs.m_bout;
         }
 };
+
+
 
 // [[Rcpp::export]]
 // void extractVecfornthSample(unsigned int nthsample, unsigned int k_uniqTime, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & nthVec) {
@@ -2752,12 +2725,16 @@ struct CorssProd_AandbVec_surv : public Worker
         }
 };
 
+
+
 //http://gallery.rcpp.org/articles/parallel-inner-product/
 struct CorssProd_AandbVec_surv_double : public Worker
 {
         // source vectors
         arma::colvec n_bVec;
-        arma::colvec n_RvecIndex;
+        // arma::colvec n_RvecIndex;
+		arma::colvec n_RvecStartIndex;    ///T modified by Tian on Feb 13, 2026
+		arma::colvec n_RvecEndIndex;    ///T modified by Tian on Feb 13, 2026
         arma::colvec n_sqrtWinvNVec;
         unsigned int k_uniqTime;
         // product that I have accumulated
@@ -2765,14 +2742,18 @@ struct CorssProd_AandbVec_surv_double : public Worker
         unsigned int m_N;
 
         // constructors
-        CorssProd_AandbVec_surv_double(arma::colvec & x, arma::vec & y,  arma::vec & z,  unsigned int k)
-                : n_bVec(x),n_RvecIndex(y),n_sqrtWinvNVec(z),k_uniqTime(k) {
+        // CorssProd_AandbVec_surv_double(arma::colvec & x, arma::vec & y,  arma::vec & z,  unsigned int k)
+        //         : n_bVec(x),n_RvecIndex(y),n_sqrtWinvNVec(z),k_uniqTime(k) {
+		CorssProd_AandbVec_surv_double(arma::colvec & x, arma::vec & yStart, arma::vec & yEnd, arma::vec & z,  unsigned int k)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(x),n_RvecStartIndex(yStart),n_RvecEndIndex(yEnd),n_sqrtWinvNVec(z),k_uniqTime(k) {
                   m_N = geno.getNnomissing();
                   m_bout.zeros(k_uniqTime);
         }
-        CorssProd_AandbVec_surv_double(const CorssProd_AandbVec_surv_double& CorssProd_AandbVec_surv_double, Split)
-                : n_bVec(CorssProd_AandbVec_surv_double.n_bVec),n_RvecIndex(CorssProd_AandbVec_surv_double.n_RvecIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv_double.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv_double.k_uniqTime)
-        {
+        // CorssProd_AandbVec_surv_double(const CorssProd_AandbVec_surv_double& CorssProd_AandbVec_surv_double, Split)
+        //         : n_bVec(CorssProd_AandbVec_surv_double.n_bVec),n_RvecIndex(CorssProd_AandbVec_surv_double.n_RvecIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv_double.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv_double.k_uniqTime)
+        CorssProd_AandbVec_surv_double(const CorssProd_AandbVec_surv_double& CorssProd_AandbVec_surv_double, Split)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(CorssProd_AandbVec_surv_double.n_bVec),n_RvecStartIndex(CorssProd_AandbVec_surv_double.n_RvecStartIndex),n_RvecEndIndex(CorssProd_AandbVec_surv_double.n_RvecEndIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv_double.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv_double.k_uniqTime)
+		{
                 m_N = CorssProd_AandbVec_surv_double.m_N;
                 m_bout.zeros(k_uniqTime);
         }
@@ -2788,7 +2769,8 @@ struct CorssProd_AandbVec_surv_double : public Worker
                         //nthsample = i;
                         //ktime=n_RvecIndex(i);
                         //vec.zeros(k_uniqTime);
-                        extractVecfornthSample_double(i, k_uniqTime, n_RvecIndex, n_sqrtWinvNVec, vec);
+                        // extractVecfornthSample_double(i, k_uniqTime, n_RvecIndex, n_sqrtWinvNVec, vec);
+						extractVecfornthSample_double(i, k_uniqTime, n_RvecStartIndex, n_RvecEndIndex, n_sqrtWinvNVec, vec);    ///T modified by Tian on Feb 13, 2026
                         //for(unsigned int j = 0; j < ktime; j++){
                         //        vec(j) = n_Dvec(j)*n_sqrtWinvNVec(i);
                         //}
@@ -2803,12 +2785,14 @@ struct CorssProd_AandbVec_surv_double : public Worker
 };
 
 
-// [[Rcpp::export]]
-arma::fvec parallelCrossProd_AandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, unsigned int kuniqtime) {
+[[Rcpp::export]]
+// arma::fvec parallelCrossProd_AandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, unsigned int kuniqtime) {
+arma::fvec parallelCrossProd_AandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, unsigned int kuniqtime) {    ///T modified by Tian on Feb 13, 2026
 
 //  // declare the InnerProduct instance that takes a pointer to the vector data
 //      unsigned int ktime = sqrtWinvNVec.n_elem;
-        CorssProd_AandbVec_surv  CorssProd_AandbVec_surv(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+        // CorssProd_AandbVec_surv  CorssProd_AandbVec_surv(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+		CorssProd_AandbVec_surv  CorssProd_AandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, kuniqtime);    ///T modified by Tian on Feb 13, 2026
         int m_N = geno.getNnomissing();
 
 //  // call paralleReduce to start the work
@@ -2818,12 +2802,15 @@ arma::fvec parallelCrossProd_AandbVec_surv(arma::fcolvec & bVec, arma::fvec & Rv
 }
 
 
-// [[Rcpp::export]]
-arma::vec parallelCrossProd_AandbVec_surv_double(arma::colvec & bVec, arma::vec & RvecIndex, arma::vec & sqrtWinvNVec, unsigned int kuniqtime) {
+
+[[Rcpp::export]]
+// arma::vec parallelCrossProd_AandbVec_surv_double(arma::colvec & bVec, arma::vec & RvecIndex, arma::vec & sqrtWinvNVec, unsigned int kuniqtime) {
+arma::vec parallelCrossProd_AandbVec_surv_double(arma::colvec & bVec, arma::vec & RvecStartIndex, arma::vec & RvecEndIndex, arma::vec & sqrtWinvNVec, unsigned int kuniqtime) {    ///T modified by Tian on Feb 13, 2026
 
 //  // declare the InnerProduct instance that takes a pointer to the vector data
 //      unsigned int ktime = sqrtWinvNVec.n_elem;
-        CorssProd_AandbVec_surv_double  CorssProd_AandbVec_surv_double(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+        // CorssProd_AandbVec_surv_double  CorssProd_AandbVec_surv_double(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+		CorssProd_AandbVec_surv_double  CorssProd_AandbVec_surv_double(bVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, kuniqtime);    ///T modified by Tian on Feb 13, 2026
         int m_N = geno.getNnomissing();
 
 //  // call paralleReduce to start the work
@@ -2835,10 +2822,12 @@ arma::vec parallelCrossProd_AandbVec_surv_double(arma::colvec & bVec, arma::vec 
 
 
 // [[Rcpp::export]]
-arma::fvec parallelCrossProd_RandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, unsigned int kuniqtime) {
+// arma::fvec parallelCrossProd_RandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, unsigned int kuniqtime) {
+arma::fvec parallelCrossProd_RandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, unsigned int kuniqtime) {    ///T modified by Tian on Feb 13, 2026
 
   // declare the InnerProduct instance that takes a pointer to the vector data
-        CorssProd_RandbVec_surv  CorssProd_RandbVec_surv(bVec, RvecIndex, kuniqtime);
+        // CorssProd_RandbVec_surv  CorssProd_RandbVec_surv(bVec, RvecIndex, kuniqtime);
+		CorssProd_RandbVec_surv  CorssProd_RandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, kuniqtime);    ///T modified by Tian on Feb 13, 2026
         int m_N = geno.getNnomissing();
   // call paralleReduce to start the work
         parallelReduce(0, m_N, CorssProd_RandbVec_surv);
@@ -2846,41 +2835,54 @@ arma::fvec parallelCrossProd_RandbVec_surv(arma::fcolvec & bVec, arma::fvec & Rv
         return CorssProd_RandbVec_surv.m_bout;
 }
 
+
+
 // [[Rcpp::export]]
-arma::fcolvec getProdRb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, unsigned int kuniqtime){
+// arma::fcolvec getProdRb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, unsigned int kuniqtime){
+arma::fcolvec getProdRb_Surv(arma::fcolvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, unsigned int kuniqtime){     ///T modified by Tian on Feb 13, 2026
         //unsigned int nsample = geno.getNnomissing();
         //unsigned int kuniqtime = Dvec.n_elem;
 
-        arma::fcolvec Rb = parallelCrossProd_RandbVec_surv(bVec, RvecIndex, kuniqtime);
+        // arma::fcolvec Rb = parallelCrossProd_RandbVec_surv(bVec, RvecIndex, kuniqtime);
+		arma::fcolvec Rb = parallelCrossProd_RandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, kuniqtime);     ///T modified by Tian on Feb 13, 2026
         return Rb;
 }
 
 
+
 // [[Rcpp::export]]
-arma::fcolvec getProdAb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){
+// arma::fcolvec getProdAb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){
+arma::fcolvec getProdAb_Surv(arma::fcolvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){    ///T modified by Tian on Feb 13, 2026
         //unsigned int nsample = geno.getNnomissing();
         unsigned int kuniqtime = Dvec.n_elem;
 
-        arma::fcolvec Ab = parallelCrossProd_AandbVec_surv(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+        // arma::fcolvec Ab = parallelCrossProd_AandbVec_surv(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+		arma::fcolvec Ab = parallelCrossProd_AandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, kuniqtime);    ///T modified by Tian on Feb 13, 2026
         //cout << "Ab 1st part " << endl;
         //Ab.print();
         Ab = Ab +  (-1/Dvec) % bVec;
         return Ab;
 }
 
+
+
 // [[Rcpp::export]]
-arma::colvec getProdAb_Surv_double(arma::colvec& bVec, arma::vec & RvecIndex, arma::vec& sqrtWinvNVec, arma::vec& Dvec){
+// arma::colvec getProdAb_Surv_double(arma::colvec& bVec, arma::vec & RvecIndex, arma::vec& sqrtWinvNVec, arma::vec& Dvec){
+arma::colvec getProdAb_Surv_double(arma::colvec& bVec, arma::vec & RvecStartIndex, arma::vec & RvecEndIndex, arma::vec& sqrtWinvNVec, arma::vec& Dvec){    ///T modified by Tian on Feb 13, 2026
         //unsigned int nsample = geno.getNnomissing();
         unsigned int kuniqtime = Dvec.n_elem;
 
-        arma::colvec Ab = parallelCrossProd_AandbVec_surv_double(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+        // arma::colvec Ab = parallelCrossProd_AandbVec_surv_double(bVec, RvecIndex, sqrtWinvNVec, kuniqtime);
+		arma::colvec Ab = parallelCrossProd_AandbVec_surv_double(bVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, kuniqtime);    ///T modified by Tian on Feb 13, 2026
         Ab = Ab +  (-1/Dvec) % bVec;
         return Ab;
 }
 
 
+
 // [[Rcpp::export]]
-arma::fvec getDiagofA( arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){
+// arma::fvec getDiagofA(arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){
+arma::fvec getDiagofA(arma::fvec& RvecStartIndex, arma::fvec& RvecEndIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec){    ///T modified by Tian on Feb 13, 2026
         arma::fvec diagA;
         diagA = (-1/Dvec);
         unsigned int nsample = sqrtWinvNVec.n_elem;
@@ -2891,7 +2893,8 @@ arma::fvec getDiagofA( arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fve
                         //nthsample = i;
                         //ktime=n_RvecIndex(i);
                         //vec.zeros(k_uniqTime);
-                        extractVecfornthSample(i, k_uniqTime, RvecIndex, sqrtWinvNVec, vec);
+                        // extractVecfornthSample(i, k_uniqTime, RvecIndex, sqrtWinvNVec, vec);
+						extractVecfornthSample(i, k_uniqTime, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, vec);    ///T modified by Tian on Feb 13, 2026
                         //cout << "vec.n_elem: " << vec.n_elem << endl;
                         diagA = diagA + vec % vec;
         }
@@ -2907,8 +2910,10 @@ arma::fvec getDiagofA( arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fve
 }
 
 
+
 // [[Rcpp::export]]
-arma::vec getDiagofA_double( arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec){
+// arma::vec getDiagofA_double(arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec){
+arma::vec getDiagofA_double(arma::vec& RvecStartIndex, arma::vec& RvecEndIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec){    ///T modified by Tian on Feb 13, 2026
         arma::vec diagA;
         diagA = (-1/Dvec);
         unsigned int nsample = sqrtWinvNVec.n_elem;
@@ -2919,7 +2924,8 @@ arma::vec getDiagofA_double( arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma:
                         //nthsample = i;
                         //ktime=n_RvecIndex(i);
                         //vec.zeros(k_uniqTime);
-                        extractVecfornthSample_double(i, k_uniqTime, RvecIndex, sqrtWinvNVec, vec);
+                        // extractVecfornthSample_double(i, k_uniqTime, RvecIndex, sqrtWinvNVec, vec);
+						extractVecfornthSample_double(i, k_uniqTime, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, vec);    ///T modified by Tian on Feb 13, 2026
                         //cout << "vec.n_elem: " << vec.n_elem << endl;
                         diagA = diagA + vec % vec;
         }
@@ -2936,8 +2942,10 @@ arma::vec getDiagofA_double( arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma:
 }
 
 
+
 // [[Rcpp::export]]
-arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec,  arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec, int maxiterPCG, float tolPCG, arma::vec & wVec, arma::vec & tauVec, arma::mat & Rmat){
+// arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec, arma::vec& RvecIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec, int maxiterPCG, float tolPCG, arma::vec & wVec, arma::vec & tauVec, arma::mat & Rmat){
+arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec, arma::vec& RvecStartIndex, arma::vec& RvecEndIndex, arma::vec& sqrtWinvNVec,arma::vec& Dvec, int maxiterPCG, float tolPCG, arma::vec & wVec, arma::vec & tauVec, arma::mat & Rmat){    ///T modified by Tian on Feb 13, 2026
     unsigned int kuniqtime = Dvec.n_elem;
     //cout << "kuniqtime is " << kuniqtime << endl;
     arma::vec xVec(kuniqtime);
@@ -2948,7 +2956,8 @@ arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec,  arma::vec& RvecIndex, a
         arma::vec zVec(kuniqtime);
         arma::vec minvVec(kuniqtime);
 
-        minvVec = 1/getDiagofA_double(RvecIndex,sqrtWinvNVec,Dvec);/////To update
+        // minvVec = 1/getDiagofA_double(RvecIndex,sqrtWinvNVec,Dvec);    /////To update
+		minvVec = 1/getDiagofA_double(RvecStartIndex,RvecEndIndex,sqrtWinvNVec,Dvec);    ///T modified by Tian on Feb 13, 2026
         zVec = minvVec % rVec;
         cout << "minvVec(10): " << minvVec(10) << endl;
         cout << "minvVec(20): " << minvVec(20) << endl;
@@ -2963,13 +2972,15 @@ arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec,  arma::vec& RvecIndex, a
         // cout << "OK" << endl;
         //arma::fmat ApVectemp = (Rmat.t()) * sqrtWinvNmat;
         //arma::fcolvec ApVec0 = ApVectemp * (ApVectemp.t()) * pVec - (1/Dvec) % pVec;
-        arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+        // arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+		arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecStartIndex,RvecEndIndex,sqrtWinvNVec,Dvec);    ///T modified by Tian on Feb 13, 2026
         //cout << "ApVec(10): " << ApVec(10) << endl;
         //cout << "ApVec0(10): " << ApVec0(10) << endl;
         int iter = 0;
         while (sumr2 > tolPCG && iter < maxiterPCG) {
                 iter = iter + 1;
-                arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+                // arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+				arma::colvec ApVec = getProdAb_Surv_double(pVec,RvecStartIndex,RvecEndIndex,sqrtWinvNVec,Dvec);    ///T modified by Tian on Feb 13, 2026
                 cout << "iter: " << iter << endl;
                 //arma::fcolvec ApVectemp = (Rmat.t()) * sqrtWinvNVec;
                 //arma::fcolvec ApVec = ApVectemp * (ApVectemp.t()) * pVec - (1/Dvec) % pVec;
@@ -3012,8 +3023,11 @@ arma::vec getPCG1ofACinvAndVector_test(arma::vec& bVec,  arma::vec& RvecIndex, a
         return(xVec);
 }
 
+
+
 // [[Rcpp::export]]
-arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec,  arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec, int maxiterPCG, float tolPCG, arma::fvec & wVec, arma::fvec & tauVec){
+// arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec, arma::fvec& RvecIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec, int maxiterPCG, float tolPCG, arma::fvec & wVec, arma::fvec & tauVec){
+arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec, arma::fvec& RvecStartIndex, arma::fvec& RvecEndIndex, arma::fvec& sqrtWinvNVec,arma::fvec& Dvec, int maxiterPCG, float tolPCG, arma::fvec & wVec, arma::fvec & tauVec){    ///T modified by Tian on Feb 13, 2026
     maxiterPCG = 200;
     unsigned int kuniqtime = Dvec.n_elem;
     //cout << "kuniqtime is " << kuniqtime << endl;
@@ -3026,7 +3040,8 @@ arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec,  arma::fvec& RvecIndex, arm
         arma::fvec zVec(kuniqtime);
         arma::fvec minvVec(kuniqtime);
 
-        minvVec = 1/getDiagofA(RvecIndex,sqrtWinvNVec,Dvec);/////To update
+        // minvVec = 1/getDiagofA(RvecIndex,sqrtWinvNVec,Dvec);    /////To update
+		minvVec = 1/getDiagofA(RvecStartIndex,RvecEndIndex,sqrtWinvNVec,Dvec);    ///T modified by Tian on Feb 13, 2026
         zVec = minvVec % rVec;
         //cout << "minvVec(10): " << minvVec(10) << endl;
         //cout << "minvVec(20): " << minvVec(20) << endl;
@@ -3052,7 +3067,8 @@ arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec,  arma::fvec& RvecIndex, arm
         arma::fcolvec ApVec;
         while (sumr2 > tolPCG && iter < maxiterPCG) {
                 iter = iter + 1;
-                ApVec = getProdAb_Surv(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+                // ApVec = getProdAb_Surv(pVec,RvecIndex,sqrtWinvNVec,Dvec);
+				ApVec = getProdAb_Surv(pVec,RvecStartIndex,RvecEndIndex,sqrtWinvNVec,Dvec);    ///T modified by Tian on Feb 13, 2026
                 //cout << "iter: " << iter << endl;
                 //for(size_t j=0; j< 10; j++){
                 //      cout << "j: " << j << " ApVec(j) " << ApVec(j) << endl;
@@ -3098,28 +3114,70 @@ arma::fvec getPCG1ofACinvAndVector(arma::fvec& bVec,  arma::fvec& RvecIndex, arm
 }
 
 
-// [[Rcpp::export]]
-arma::fcolvec getProdRtb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex){
-        unsigned int kuniqtime = bVec.n_elem;
-        arma::fcolvec bsumVec;
-        arma::fcolvec Rtbvec;
-        unsigned int m_N = geno.getNnomissing();
-        Rtbvec.zeros(m_N);
-        bsumVec.zeros(kuniqtime);
-        bsumVec(0) = bVec(0);
-        for(unsigned int i = 1; i < kuniqtime; i++){
-                bsumVec(i) = bsumVec(i-1) + bVec(i);
-        }
-        int ktime;
-        for(unsigned int j = 0; j < m_N; j++){
-                ktime = RvecIndex(j);
-                Rtbvec(j) = bsumVec(ktime-1);
-        }
-        return(Rtbvec);
-}
 
 // [[Rcpp::export]]
-arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){
+// arma::fcolvec getProdRtb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex){
+//         unsigned int kuniqtime = bVec.n_elem;
+//         arma::fcolvec bsumVec;
+//         arma::fcolvec Rtbvec;
+//         unsigned int m_N = geno.getNnomissing();
+//         Rtbvec.zeros(m_N);
+//         bsumVec.zeros(kuniqtime);
+//         bsumVec(0) = bVec(0);
+//         for(unsigned int i = 1; i < kuniqtime; i++){
+//                 bsumVec(i) = bsumVec(i-1) + bVec(i);
+//         }
+//         int ktime;
+//         for(unsigned int j = 0; j < m_N; j++){
+//                 ktime = RvecIndex(j);
+//                 Rtbvec(j) = bsumVec(ktime-1);
+//         }
+//         return(Rtbvec);
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+arma::fcolvec getProdRtb_Surv(arma::fcolvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex){
+    unsigned int kuniqtime = bVec.n_elem;
+    arma::fcolvec bsumVec(kuniqtime);
+    arma::fcolvec Rtbvec;
+    unsigned int n = geno.getNnomissing();
+    Rtbvec.zeros(n);
+
+    bsumVec(0) = bVec(0);
+    for(unsigned int i = 1; i < kuniqtime; i++){
+        bsumVec(i) = bsumVec(i-1) + bVec(i);
+    }
+
+    for(unsigned int j = 0; j < n; j++){
+        unsigned int kstart1 = (unsigned int)RvecStartIndex(j);
+        unsigned int kend1   = (unsigned int)RvecEndIndex(j);
+
+        if(kend1 < 1){
+            Rtbvec(j) = 0.0;
+            continue;
+        }
+        if(kstart1 < 1) kstart1 = 1;
+
+        unsigned int e0 = kend1 - 1;
+        if(e0 >= kuniqtime) e0 = kuniqtime - 1;
+
+        float sumEnd = bsumVec(e0);
+        float sumBeforeStart = 0.0;
+        if(kstart1 > 1){
+            unsigned int s0m1 = (kstart1 - 1) - 1;
+            if(s0m1 < kuniqtime) sumBeforeStart = bsumVec(s0m1);
+        }
+        Rtbvec(j) = sumEnd - sumBeforeStart;
+    }
+    return(Rtbvec);
+}
+
+
+
+// [[Rcpp::export]]
+// arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){
+arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec crossProdVec;
         arma::fcolvec crossProdVec0;
         arma::fcolvec crossProdVec1;
@@ -3171,7 +3229,8 @@ arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma:
 
 //      cout << "RNWinvb(0) " << RNWinvb(0) << endl;
 */
-        RNWinvb = getProdRb_Surv(NWinvbVec, RvecIndex, kuniqtime);
+        // RNWinvb = getProdRb_Surv(NWinvbVec, RvecIndex, kuniqtime);
+		RNWinvb = getProdRb_Surv(NWinvbVec, RvecStartIndex, RvecEndIndex, kuniqtime);    ///T modified by Tian on Feb 13, 2026
  //     RNWinvb0 = (Rmat.t()) * NWinvbVec;
 //      arma::fcolvec RNWinvb1 =   Rmat.t() * (NWinv % bVec);
 
@@ -3207,7 +3266,8 @@ arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma:
         float pxnorm = arma::norm(RNWinvb);
 
         RNWinvb = RNWinvb/pxnorm;
-        AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);
+        // AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);
+		AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);    ///T modified by Tian on Feb 13, 2026
         AinvRNWinvb = AinvRNWinvb * pxnorm;
         //for(size_t i=0; i< 5; i++){
         //      cout << "i: " << i << " AinvRNWinvb(i) " << AinvRNWinvb(i) << endl;
@@ -3243,7 +3303,8 @@ arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma:
         // cout << "OKKKKK8" << endl;
         // cout << "DAinvDRNWinvb(0) is " << DAinvDRNWinvb(0) << endl;
         //arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb0, RvecIndex);
-        arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecIndex);
+        // arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecIndex);
+		arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecStartIndex, RvecEndIndex);    ///T modified by Tian on Feb 13, 2026
         //cout << "RtAinvDRNWinvb is " << RtAinvDRNWinvb(0) << endl;
         crossProdVec1 = NWinv % RtAinvDRNWinvb;
         //cout << "crossProdVec1(0) is " << crossProdVec1(0) << endl;
@@ -3270,9 +3331,10 @@ arma::fcolvec getCrossprod_Surv_new(arma::fcolvec& bVec, arma::fvec& wVec, arma:
 
 
 // [[Rcpp::export]]
-arma::fvec getPCG1ofWminusUAndVector(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG,  arma::fvec & dofWminusU){
+// arma::fvec getPCG1ofWminusUAndVector(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG,  arma::fvec & dofWminusU){
+arma::fvec getPCG1ofWminusUAndVector(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){    ///T modified by Tian on Feb 13, 2026
 
-                   //  Start Timers
+    //  Start Timers
     //double wall0 = get_wall_time();
     //double cpu0  = get_cpu_time();
     int Nnomissing = geno.getNnomissing();
@@ -3352,7 +3414,8 @@ arma::fvec getPCG1ofWminusUAndVector(arma::fvec& wVec,  arma::fvec& tauVec, arma
 
 
                 //cout << "RWinNpVec(0) is " << RWinNpVec(0) << endl;
-                arma::fcolvec ApVec = getProdWminusUb_Surv(pVec, RvecIndex, NVec, sqrtDVec, wVec);
+                // arma::fcolvec ApVec = getProdWminusUb_Surv(pVec, RvecIndex, NVec, sqrtDVec, wVec);
+				arma::fcolvec ApVec = getProdWminusUb_Surv(pVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec, wVec);    ///T modified by Tian on Feb 13, 2026
                 //arma::fcolvec ApVec = getCrossprod_Surv_new(pVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
                 //cout << "ApVec is " << ApVec(0) << endl;
                 //cout << "OKKKKKK2" << endl;
