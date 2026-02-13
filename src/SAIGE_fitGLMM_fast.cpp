@@ -2232,32 +2232,90 @@ arma::fcolvec getCrossprod_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fve
 
 
 // [[Rcpp::export]]
-arma::fvec extractVecatTimek(unsigned int ktime , arma::fvec & rvecIndex, arma::fvec & winvn) {
-        arma::fvec kthVec;
-        unsigned int n_kthVec = winvn.n_elem;
-        kthVec.zeros(n_kthVec);
-        for(unsigned int i=0; i< n_kthVec; i++){
-                if(rvecIndex(i) >= ktime){
-                        kthVec(i) = winvn(i);
-                }
-        }
-        return(kthVec);
+// arma::fvec extractVecatTimek(unsigned int ktime , arma::fvec & rvecIndex, arma::fvec & winvn) {
+//         arma::fvec kthVec;
+//         unsigned int n_kthVec = winvn.n_elem;
+//         kthVec.zeros(n_kthVec);
+//         for(unsigned int i=0; i< n_kthVec; i++){
+//                 if(rvecIndex(i) >= ktime){
+//                         kthVec(i) = winvn(i);
+//                 }
+//         }
+//         return(kthVec);
+// }
+
+///T modified by Tian on Feb 13, 2026
+///??? double check -- original version seems to mix 1-based rvecIndex from R and 0-based index in C++
+// [[Rcpp::export]]
+arma::fvec extractVecatTimek(unsigned int k0, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & winvn) {
+		arma::fvec kthVec;
+    	unsigned int n = winvn.n_elem;
+    	kthVec.zeros(n);
+
+    	for(unsigned int i = 0; i < n; i++){
+        	unsigned int kstart1 = (unsigned int)RvecStartIndex(i);
+        	unsigned int kend1   = (unsigned int)RvecEndIndex(i);
+        	if(inRiskInterval_0based(k0, kstart1, kend1)){
+            	kthVec(i) = winvn(i);
+        	}
+    	}
+    	return(kthVec);
 }
+
+
 
 //extractUvecforkthTime(i, n_RvecIndex, n_NVec, n_sqrtDVec, vec);
 // [[Rcpp::export]]
-void extractUvecforkthTime(unsigned int kthtime, arma::fvec & RvecIndex,  arma::fvec& NVec,  arma::fvec & sqrtDVec, arma::fvec & kthVec){
-        //unsigned int ktime=RvecIndex(nthsample);
-        unsigned int nsample = RvecIndex.n_elem;
-        kthVec.zeros();
-        float sqrtDKth = sqrtDVec(kthtime);
-        for(unsigned int j = 0; j < nsample; j++){
-                if((RvecIndex(j)-1) >= kthtime){
-                        kthVec(j) = NVec(j);
-                }
-        }
-        kthVec = kthVec * sqrtDKth;
+// void extractUvecforkthTime(unsigned int kthtime, arma::fvec & RvecIndex,  arma::fvec& NVec,  arma::fvec & sqrtDVec, arma::fvec & kthVec){
+//         //unsigned int ktime=RvecIndex(nthsample);
+//         unsigned int nsample = RvecIndex.n_elem;
+//         kthVec.zeros();
+//         float sqrtDKth = sqrtDVec(kthtime);
+//         for(unsigned int j = 0; j < nsample; j++){
+//                 if((RvecIndex(j)-1) >= kthtime){
+//                         kthVec(j) = NVec(j);
+//                 }
+//         }
+//         kthVec = kthVec * sqrtDKth;
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+void extractUvecforkthTime(unsigned int k0,
+                           arma::fvec & RvecStartIndex,
+                           arma::fvec & RvecEndIndex,
+                           arma::fvec & NVec,
+                           arma::fvec & sqrtDVec,
+                           arma::fvec & kthVec){
+
+		unsigned int n = NVec.n_elem;
+		kthVec.zeros(n);
+
+    	float sqrtDK = sqrtDVec(k0);
+
+    	for(unsigned int j = 0; j < n; j++){
+        	unsigned int kstart1 = (unsigned int)RvecStartIndex(j);
+        	unsigned int kend1   = (unsigned int)RvecEndIndex(j);
+        	if(inRiskInterval_0based(k0, kstart1, kend1)){
+            	kthVec(j) = NVec(j);
+        	}
+    	}
+    	kthVec = kthVec * sqrtDK;
 }
+
+
+
+///T added by Tian on Feb 13, 2026
+inline bool inRiskInterval_0based(unsigned int k0, unsigned int kstart1, unsigned int kend1){
+	    // Inputs: k0 is 0-based time index; kstart1/kend1 are 1-based indices from R
+	    // Returns: whether k0 is within [kstart1-1, kend1-1]
+	    if(kend1 < 1) return false;
+	    if(kstart1 < 1) kstart1 = 1;
+	    unsigned int s0 = kstart1 - 1;
+	    unsigned int e0 = kend1 - 1;
+	    return (k0 >= s0 && k0 <= e0);
+}
+
 
 
 //http://gallery.rcpp.org/articles/parallel-inner-product/
