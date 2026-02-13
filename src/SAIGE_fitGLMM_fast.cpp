@@ -2343,7 +2343,7 @@ struct CorssProd_UandbVec_surv : public Worker
         }
         // CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)
         //         : n_bVec(CorssProd_UandbVec_surv.n_bVec),n_RvecIndex(CorssProd_UandbVec_surv.n_RvecIndex),n_NVec(CorssProd_UandbVec_surv.n_NVec),n_sqrtDVec(CorssProd_UandbVec_surv.n_sqrtDVec)
-		CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)
+		CorssProd_UandbVec_surv(const CorssProd_UandbVec_surv& CorssProd_UandbVec_surv, Split)    ///T modified by Tian on Feb 13, 2026
 	    		: n_bVec(CorssProd_UandbVec_surv.n_bVec),n_RvecStartIndex(CorssProd_UandbVec_surv.n_RvecStartIndex),n_RvecEndIndex(CorssProd_UandbVec_surv.n_RvecEndIndex),n_NVec(CorssProd_UandbVec_surv.n_NVec),n_sqrtDVec(CorssProd_UandbVec_surv.n_sqrtDVec)
         {
                 m_N = CorssProd_UandbVec_surv.m_N;
@@ -2379,30 +2379,59 @@ struct CorssProd_UandbVec_surv : public Worker
 
 
 // [[Rcpp::export]]
-arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, arma::fvec& NVec,  arma::fvec & sqrtDVec) {
+// arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec, arma::fvec & RvecIndex, arma::fvec& NVec,  arma::fvec & sqrtDVec) {
 
-//  // declare the InnerProduct instance that takes a pointer to the vector data
-        unsigned int ktime = sqrtDVec.n_elem;
-        CorssProd_UandbVec_surv  CorssProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
-        //int m_N = geno.getNnomissing();
+// //  // declare the InnerProduct instance that takes a pointer to the vector data
+//         unsigned int ktime = sqrtDVec.n_elem;
+//         CorssProd_UandbVec_surv  CorssProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
+//         //int m_N = geno.getNnomissing();
 
-//  // call paralleReduce to start the work
-        parallelReduce(0, ktime, CorssProd_UandbVec_surv);
+// //  // call paralleReduce to start the work
+//         parallelReduce(0, ktime, CorssProd_UandbVec_surv);
 
-        return CorssProd_UandbVec_surv.m_bout;
+//         return CorssProd_UandbVec_surv.m_bout;
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+arma::fvec parallelCrossProd_UandbVec_surv(arma::fcolvec & bVec,
+                                           arma::fvec & RvecStartIndex,
+                                           arma::fvec & RvecEndIndex,
+                                           arma::fvec & NVec,
+                                           arma::fvec & sqrtDVec) {
+	
+    unsigned int ktime = sqrtDVec.n_elem;
+    CorssProd_UandbVec_surv CorssProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);
+    parallelReduce(0, ktime, CorssProd_UandbVec_surv);
+    return CorssProd_UandbVec_surv.m_bout;
 }
 
 
 
 // [[Rcpp::export]]
-arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, arma::fvec& NVec, arma::fvec& sqrtDVec, arma::fvec& wVec){
-        //unsigned int nsample = geno.getNnomissing();
-        //unsigned int kuniqtime = Dvec.n_elem;
+// arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec, arma::fvec & RvecIndex, arma::fvec& NVec, arma::fvec& sqrtDVec, arma::fvec& wVec){
+//         //unsigned int nsample = geno.getNnomissing();
+//         //unsigned int kuniqtime = Dvec.n_elem;
 
-        arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
-        arma::fcolvec WminusUb = wVec % bVec - Ub;
-        return WminusUb;
+//         arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecIndex, NVec, sqrtDVec);
+//         arma::fcolvec WminusUb = wVec % bVec - Ub;
+//         return WminusUb;
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+arma::fcolvec getProdWminusUb_Surv(arma::fcolvec& bVec,
+									arma::fvec & RvecStartIndex,
+									arma::fvec & RvecEndIndex,
+									arma::fvec& NVec,
+									arma::fvec& sqrtDVec,
+									arma::fvec& wVec){
+	
+    arma::fcolvec Ub = parallelCrossProd_UandbVec_surv(bVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDVec);
+    arma::fcolvec WminusUb = wVec % bVec - Ub;
+    return WminusUb;
 }
+
 
 
 // [[Rcpp::export]]
@@ -2469,7 +2498,9 @@ struct CorssProd_WinvNRttandVec : public Worker
 {
         // source vectors
         arma::fcolvec & n_bVec;
-        arma::fcolvec & n_RvecIndex;
+        // arma::fcolvec & n_RvecIndex;
+		arma::fcolvec & n_RvecStartIndex;    ///T modified by Tian on Feb 13, 2026
+		arma::fcolvec & n_RvecEndIndex;    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec & n_WinvN;
 
         unsigned int k_uniTime;
@@ -2479,14 +2510,28 @@ struct CorssProd_WinvNRttandVec : public Worker
 
 
         // constructors
-        CorssProd_WinvNRttandVec(arma::fcolvec & x, arma::fvec & y, arma::fvec & z, unsigned int k)
-                : n_bVec(x),n_RvecIndex(y),n_WinvN(z),k_uniTime(k) {
+        // CorssProd_WinvNRttandVec(arma::fcolvec & x, arma::fvec & y, arma::fvec & z, unsigned int k)
+        //         : n_bVec(x),n_RvecIndex(y),n_WinvN(z),k_uniTime(k) {
+        //         m_bout.zeros(k_uniTime);
+        // }
+
+		///T modified by Tian on Feb 13, 2026
+		CorssProd_WinvNRttandVec(arma::fcolvec & x, arma::fvec & yStart, arma::fvec & yEnd, arma::fvec & z, unsigned int k)
+                : n_bVec(x),n_RvecStartIndex(yStart),n_RvecEndIndex(yEnd),n_WinvN(z),k_uniTime(k) {
                 m_bout.zeros(k_uniTime);
         }
-        CorssProd_WinvNRttandVec(const CorssProd_WinvNRttandVec& CorssProd_WinvNRttandVec, Split)
-                : n_bVec(CorssProd_WinvNRttandVec.n_bVec),n_RvecIndex(CorssProd_WinvNRttandVec.n_RvecIndex),n_WinvN(CorssProd_WinvNRttandVec.n_WinvN),k_uniTime(CorssProd_WinvNRttandVec.k_uniTime)
-        {
 
+        // CorssProd_WinvNRttandVec(const CorssProd_WinvNRttandVec& CorssProd_WinvNRttandVec, Split)
+        //         : n_bVec(CorssProd_WinvNRttandVec.n_bVec),n_RvecIndex(CorssProd_WinvNRttandVec.n_RvecIndex),n_WinvN(CorssProd_WinvNRttandVec.n_WinvN),k_uniTime(CorssProd_WinvNRttandVec.k_uniTime)
+        // {
+
+        //         m_bout.zeros(k_uniTime);
+        // }
+
+		///T modified by Tian on Feb 13, 2026
+		CorssProd_WinvNRttandVec(const CorssProd_WinvNRttandVec& CorssProd_WinvNRttandVec, Split)
+                : n_bVec(CorssProd_WinvNRttandVec.n_bVec),n_RvecStartIndex(CorssProd_WinvNRttandVec.n_RvecStartIndex),n_RvecEndIndex(CorssProd_WinvNRttandVec.n_RvecEndIndex),n_WinvN(CorssProd_WinvNRttandVec.n_WinvN),k_uniTime(CorssProd_WinvNRttandVec.k_uniTime)
+        {
                 m_bout.zeros(k_uniTime);
         }
 
@@ -2497,10 +2542,11 @@ struct CorssProd_WinvNRttandVec : public Worker
                 int ktime;
                 for(unsigned int i = begin; i < end; i++){
                         ktime = i;
-                        vec=extractVecatTimek(ktime, n_RvecIndex, n_WinvN);
+                        // vec=extractVecatTimek(ktime, n_RvecIndex, n_WinvN);
+						vec = extractVecatTimek(ktime, n_RvecStartIndex, n_RvecEndIndex, n_WinvN);    ///T modified by Tian on Feb 13, 2026
 //                      std::cout << "j: " << j << std::endl;
                         val1 = dot(vec,  n_bVec);
-                        m_bout[i] += m_bout[i] + val1;
+                        m_bout[i] += m_bout[i] + val1;    ///??? Is this a bug?
                 }
         }
         // join my value with that of another InnerProduct
@@ -2510,23 +2556,79 @@ struct CorssProd_WinvNRttandVec : public Worker
 };
 
 // [[Rcpp::export]]
-void extractVecfornthSample(unsigned int nthsample, unsigned int k_uniqTime, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & nthVec) {
-        unsigned int ktime=RvecIndex(nthsample);
-        nthVec.zeros(k_uniqTime);
-        for(unsigned int j = 0; j < ktime; j++){
-                nthVec(j) = sqrtWinvNVec(nthsample);
-        }
+// void extractVecfornthSample(unsigned int nthsample, unsigned int k_uniqTime, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & nthVec) {
+//         unsigned int ktime=RvecIndex(nthsample);
+//         nthVec.zeros(k_uniqTime);
+//         for(unsigned int j = 0; j < ktime; j++){
+//                 nthVec(j) = sqrtWinvNVec(nthsample);
+//         }
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+void extractVecfornthSample(unsigned int nthsample,
+                            unsigned int k_uniqTime,
+                            arma::fvec & RvecStartIndex,
+                            arma::fvec & RvecEndIndex,
+                            arma::fvec & sqrtWinvNVec,
+                            arma::fvec & nthVec) {
+	
+    	unsigned int kstart1 = (unsigned int)RvecStartIndex(nthsample);
+    	unsigned int kend1 = (unsigned int)RvecEndIndex(nthsample);
+
+    	nthVec.zeros(k_uniqTime);
+
+    	if(kend1 < 1) return;
+    	if(kstart1 < 1) kstart1 = 1;
+    	unsigned int s0 = kstart1 - 1;
+    	unsigned int e0 = kend1 - 1;
+    	if(s0 >= k_uniqTime) return;
+    	if(e0 >= k_uniqTime) e0 = k_uniqTime - 1;
+
+    	float v = sqrtWinvNVec(nthsample);
+    	for(unsigned int j = s0; j <= e0; j++){
+        	nthVec(j) = v;
+    }
 }
+
 
 
 // [[Rcpp::export]]
-void extractVecfornthSample_double(unsigned int nthsample, unsigned int k_uniqTime, arma::vec & RvecIndex, arma::vec & sqrtWinvNVec, arma::vec & nthVec) {
-        unsigned int ktime=RvecIndex(nthsample);
-        nthVec.zeros(k_uniqTime);
-        for(unsigned int j = 0; j < ktime; j++){
-                nthVec(j) = sqrtWinvNVec(nthsample);
-        }
+// void extractVecfornthSample_double(unsigned int nthsample, unsigned int k_uniqTime, arma::vec & RvecIndex, arma::vec & sqrtWinvNVec, arma::vec & nthVec) {
+//         unsigned int ktime=RvecIndex(nthsample);
+//         nthVec.zeros(k_uniqTime);
+//         for(unsigned int j = 0; j < ktime; j++){
+//                 nthVec(j) = sqrtWinvNVec(nthsample);
+//         }
+// }
+
+///T modified by Tian on Feb 13, 2026
+// [[Rcpp::export]]
+void extractVecfornthSample_double(unsigned int nthsample,
+                                   unsigned int k_uniqTime,
+                                   arma::vec & RvecStartIndex,
+                                   arma::vec & RvecEndIndex,
+                                   arma::vec & sqrtWinvNVec,
+                                   arma::vec & nthVec) {
+	
+    	unsigned int kstart1 = (unsigned int)RvecStartIndex(nthsample);
+    	unsigned int kend1 = (unsigned int)RvecEndIndex(nthsample);
+
+    	nthVec.zeros(k_uniqTime);
+
+    	if(kend1 < 1) return;
+    	if(kstart1 < 1) kstart1 = 1;
+    	unsigned int s0 = kstart1 - 1;
+    	unsigned int e0 = kend1 - 1;
+    	if(s0 >= k_uniqTime) return;
+    	if(e0 >= k_uniqTime) e0 = k_uniqTime - 1;
+
+    	double v = sqrtWinvNVec(nthsample);
+    	for(unsigned int j = s0; j <= e0; j++){
+        	nthVec(j) = v;
+    }
 }
+
 
 
 //http://gallery.rcpp.org/articles/parallel-inner-product/
@@ -2541,13 +2643,17 @@ struct CorssProd_RandbVec_surv : public Worker
         unsigned int m_N;
 
         // constructors
-        CorssProd_RandbVec_surv(arma::fcolvec & x, arma::fvec & y, unsigned int k)
-                : n_bVec(x),n_RvecIndex(y),k_uniqTime(k) {
+        // CorssProd_RandbVec_surv(arma::fcolvec & x, arma::fvec & y, unsigned int k)
+        //         : n_bVec(x),n_RvecIndex(y),k_uniqTime(k) {
+		CorssProd_RandbVec_surv(arma::fcolvec & x, arma::fvec & yStart, arma::fvec & yEnd, unsigned int k)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(x),n_RvecStartIndex(yStart),n_RvecEndIndex(yEnd),k_uniqTime(k) {
                   m_N = geno.getNnomissing();
                   m_bout.zeros(k_uniqTime);
         }
-        CorssProd_RandbVec_surv(const CorssProd_RandbVec_surv& CorssProd_RandbVec_surv, Split)
-                : n_bVec(CorssProd_RandbVec_surv.n_bVec),n_RvecIndex(CorssProd_RandbVec_surv.n_RvecIndex),k_uniqTime(CorssProd_RandbVec_surv.k_uniqTime)
+        // CorssProd_RandbVec_surv(const CorssProd_RandbVec_surv& CorssProd_RandbVec_surv, Split)
+        //         : n_bVec(CorssProd_RandbVec_surv.n_bVec),n_RvecIndex(CorssProd_RandbVec_surv.n_RvecIndex),k_uniqTime(CorssProd_RandbVec_surv.k_uniqTime)
+		CorssProd_RandbVec_surv(const CorssProd_RandbVec_surv& CorssProd_RandbVec_surv, Split)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(CorssProd_RandbVec_surv.n_bVec),n_RvecStartIndex(CorssProd_RandbVec_surv.n_RvecStartIndex),n_RvecEndIndex(CorssProd_RandbVec_surv.n_RvecEndIndex),k_uniqTime(CorssProd_RandbVec_surv.k_uniqTime)
         {
                 m_N = CorssProd_RandbVec_surv.m_N;
                 m_bout.zeros(k_uniqTime);
@@ -2562,17 +2668,31 @@ struct CorssProd_RandbVec_surv : public Worker
                 int ktime;
                 for(unsigned int i = begin; i < end; i++){
                         nthsample = i;
-                        ktime=n_RvecIndex(i);
-                        for(unsigned int j = 0; j < ktime; j++){
-                                m_bout(j) += n_bVec(i);
-                        }
+                        // ktime=n_RvecIndex(i);
+                        // for(unsigned int j = 0; j < ktime; j++){
+                        //         m_bout(j) += n_bVec(i);
+
+						///T modified by Tian on Feb 13, 2026
+						unsigned int kstart1 = (unsigned int)n_RvecStartIndex(i);
+						unsigned int kend1 = (unsigned int)n_RvecEndIndex(i);
+
+						if(kend1 < 1) continue;
+						if(kstart1 < 1) kstart1 = 1;
+						unsigned int s0 = kstart1 - 1;
+						unsigned int e0 = kend1 - 1;
+						if(s0 >= k_uniqTime) continue;
+						if(e0 >= k_uniqTime) e0 = k_uniqTime - 1;
+
+						for(unsigned int j = s0; j <= e0; j++){
+    						m_bout(j) += n_bVec(i);
+						}
                 }
         }
         // join my value with that of another InnerProduct
         void join(const  CorssProd_RandbVec_surv & rhs) {
         m_bout += rhs.m_bout;
         }
-};
+}
 
 
 //http://gallery.rcpp.org/articles/parallel-inner-product/
@@ -2580,7 +2700,9 @@ struct CorssProd_AandbVec_surv : public Worker
 {
         // source vectors
         arma::fcolvec n_bVec;
-        arma::fcolvec n_RvecIndex;
+        // arma::fcolvec n_RvecIndex;
+		arma::fcolvec n_RvecStartIndex;    ///T modified by Tian on Feb 13, 2026
+		arma::fcolvec n_RvecEndIndex;    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec n_sqrtWinvNVec;
         unsigned int k_uniqTime;
         // product that I have accumulated
@@ -2588,13 +2710,17 @@ struct CorssProd_AandbVec_surv : public Worker
         unsigned int m_N;
 
         // constructors
-        CorssProd_AandbVec_surv(arma::fcolvec & x, arma::fvec & y,  arma::fvec & z,  unsigned int k)
-                : n_bVec(x),n_RvecIndex(y),n_sqrtWinvNVec(z),k_uniqTime(k) {
+        // CorssProd_AandbVec_surv(arma::fcolvec & x, arma::fvec & y,  arma::fvec & z,  unsigned int k)
+        //         : n_bVec(x),n_RvecIndex(y),n_sqrtWinvNVec(z),k_uniqTime(k) {
+		CorssProd_AandbVec_surv(arma::fcolvec & x, arma::fvec & yStart, arma::fvec & yEnd, arma::fvec & z,  unsigned int k)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(x),n_RvecStartIndex(yStart),n_RvecEndIndex(yEnd),n_sqrtWinvNVec(z),k_uniqTime(k) {
                   m_N = geno.getNnomissing();
                   m_bout.zeros(k_uniqTime);
         }
-        CorssProd_AandbVec_surv(const CorssProd_AandbVec_surv& CorssProd_AandbVec_surv, Split)
-                : n_bVec(CorssProd_AandbVec_surv.n_bVec),n_RvecIndex(CorssProd_AandbVec_surv.n_RvecIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv.k_uniqTime)
+        // CorssProd_AandbVec_surv(const CorssProd_AandbVec_surv& CorssProd_AandbVec_surv, Split)
+        //         : n_bVec(CorssProd_AandbVec_surv.n_bVec),n_RvecIndex(CorssProd_AandbVec_surv.n_RvecIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv.k_uniqTime)
+		CorssProd_AandbVec_surv(const CorssProd_AandbVec_surv& CorssProd_AandbVec_surv, Split)    ///T modified by Tian on Feb 13, 2026
+                : n_bVec(CorssProd_AandbVec_surv.n_bVec),n_RvecStartIndex(CorssProd_AandbVec_surv.n_RvecStartIndex),n_RvecEndIndex(CorssProd_AandbVec_surv.n_RvecEndIndex),n_sqrtWinvNVec(CorssProd_AandbVec_surv.n_sqrtWinvNVec),k_uniqTime(CorssProd_AandbVec_surv.k_uniqTime)
         {
                 m_N = CorssProd_AandbVec_surv.m_N;
                 m_bout.zeros(k_uniqTime);
@@ -2611,7 +2737,8 @@ struct CorssProd_AandbVec_surv : public Worker
                         //nthsample = i;
                         //ktime=n_RvecIndex(i);
                         //vec.zeros(k_uniqTime);
-                        extractVecfornthSample(i, k_uniqTime, n_RvecIndex, n_sqrtWinvNVec, vec);
+                        // extractVecfornthSample(i, k_uniqTime, n_RvecIndex, n_sqrtWinvNVec, vec);
+						extractVecfornthSample(i, k_uniqTime, n_RvecStartIndex, n_RvecEndIndex, n_sqrtWinvNVec, vec);    ///T modified by Tian on Feb 13, 2026
                         //for(unsigned int j = 0; j < ktime; j++){
                         //        vec(j) = n_Dvec(j)*n_sqrtWinvNVec(i);
                         //}
