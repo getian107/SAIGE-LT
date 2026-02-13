@@ -2683,6 +2683,7 @@ extractVarianceRatio = function(obj.glmm.null,
 		if(pcgforUhatforSurvAnalysis){
 			# Sigma_iX_noLOCO = getSigma_X_Surv_new(W, tauVecNew, X, RvecIndex, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 			### RvecIndex -> (RvecStart, RvecEnd)
+			###!!! need to update external functions
 			Sigma_iX_noLOCO = getSigma_X_Surv_new(W, tauVecNew, X, RvecStart, RvecEnd, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 		}else{
 			Sigma_iX_noLOCO = getSigma_X_Surv(W, tauVecNew, X, WinvNRt, ACinv, diagofWminusUinv, sqrtDRN, maxiterPCG, tolPCG)
@@ -2840,6 +2841,7 @@ extractVarianceRatio = function(obj.glmm.null,
 								if (pcgforUhatforSurvAnalysis){
 									# Sigma_iG = getSigma_G_Surv_new(W, tauVecNew, G, RvecIndex, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 									### RvecIndex -> (RvecStart, RvecEnd)
+									###!!! need to update external functions
 									Sigma_iG = getSigma_G_Surv_new(W, tauVecNew, G, RvecStart, RvecEnd, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 								}else{
 									Sigma_iG = getSigma_G_Surv(W, tauVecNew, G, WinvNRt, ACinv, diagofWminusUinv, sqrtDRN, maxiterPCG, tolPCG)
