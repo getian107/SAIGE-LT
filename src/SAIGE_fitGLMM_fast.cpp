@@ -3531,7 +3531,8 @@ arma::fvec getPCG1ofWminusUAndVector(arma::fvec& wVec,  arma::fvec& tauVec, arma
 
 
 // [[Rcpp::export]]
-arma::fcolvec getCrossprod_Surv_new2(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex,  arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG,  arma::fvec & dofWminusU){
+// arma::fcolvec getCrossprod_Surv_new2(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex,  arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG,  arma::fvec & dofWminusU){
+arma::fcolvec getCrossprod_Surv_new2(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDVec, arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG,  arma::fvec & dofWminusU){    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec crossProdVec;
         arma::fcolvec crossProdVec0;
         arma::fcolvec crossProdVec1;
@@ -3541,7 +3542,8 @@ arma::fcolvec getCrossprod_Surv_new2(arma::fcolvec& bVec, arma::fvec& wVec, arma
         arma::fcolvec x0Vec(bVec.n_elem);
         x0Vec.zeros();
         //cout << "OKKKKK2" << endl;
-        crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);
+        // crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);
+		crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecStartIndex,RvecEndIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);    ///T modified by Tian on Feb 13, 2026
 
         //cout << "OKKKKK3" << endl;
         if(tauVec(1) == 0){
@@ -3559,7 +3561,8 @@ arma::fcolvec getCrossprod_Surv_new2(arma::fcolvec& bVec, arma::fvec& wVec, arma
 
 
 // [[Rcpp::export]]
-arma::fcolvec getCrossprod_Surv_new2_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex,  arma::fvec & NVec, arma::fvec & sqrtDVec,  arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
+// arma::fcolvec getCrossprod_Surv_new2_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex,  arma::fvec & NVec, arma::fvec & sqrtDVec,  arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
+arma::fcolvec getCrossprod_Surv_new2_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDVec,  arma::fcolvec & diagofWminusUinv, unsigned int kuniqtime, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec crossProdVec;
         arma::fcolvec crossProdVec0;
         arma::fcolvec crossProdVec1;
@@ -3569,7 +3572,8 @@ arma::fcolvec getCrossprod_Surv_new2_LOCO(arma::fcolvec& bVec, arma::fvec& wVec,
         //arma::fcolvec sqrtDVec = arma::sqrt(Dvec);
         arma::fcolvec x0Vec(bVec.n_elem);
         x0Vec.zeros();
-        crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);
+        // crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);
+		crossProdVec0 = tauVec(0)*getPCG1ofWminusUAndVector(wVec,tauVec,bVec,RvecStartIndex,RvecEndIndex,NVec,sqrtDVec,diagofWminusUinv,x0Vec,maxiterPCG, tolPCG, dofWminusU);    ///T modified by Tian on Feb 13, 2026
 
         if(tauVec(1) == 0){
 
@@ -3583,8 +3587,11 @@ arma::fcolvec getCrossprod_Surv_new2_LOCO(arma::fcolvec& bVec, arma::fvec& wVec,
         }
 }
 
+
+
 // [[Rcpp::export]]
-arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){
+// arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){
+arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, arma::fvec& tauVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, arma::fvec & NWinv, arma::fvec & Dvec, unsigned int kuniqtime, int maxiterPCG, float tolPCG){    ///T modified by Tian on Feb 13, 2026
         arma::fcolvec crossProdVec;
         arma::fcolvec crossProdVec0;
         arma::fcolvec crossProdVec1;
@@ -3636,7 +3643,8 @@ arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, 
 
 //      cout << "RNWinvb(0) " << RNWinvb(0) << endl;
 */
-        RNWinvb = getProdRb_Surv(NWinvbVec, RvecIndex, kuniqtime);
+        // RNWinvb = getProdRb_Surv(NWinvbVec, RvecIndex, kuniqtime);
+		RNWinvb = getProdRb_Surv(NWinvbVec, RvecStartIndex, RvecEndIndex, kuniqtime);    ///T modified by Tian on Feb 13, 2026
  //     RNWinvb0 = (Rmat.t()) * NWinvbVec;
 //      arma::fcolvec RNWinvb1 =   Rmat.t() * (NWinv % bVec);
 
@@ -3671,7 +3679,8 @@ arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, 
         */
         float pxnorm = arma::norm(RNWinvb);
         RNWinvb = RNWinvb/pxnorm;
-        AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);
+        // AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);
+		AinvRNWinvb = getPCG1ofACinvAndVector(RNWinvb, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, Dvec, maxiterPCG, tolPCG, wVec, tauVec);    ///T modified by Tian on Feb 13, 2026
         AinvRNWinvb = AinvRNWinvb * pxnorm;
         //for(size_t i=0; i< 10; i++){
         //      cout << "i: " << i << " AinvRNWinvb(i) " << AinvRNWinvb(i) << endl;
@@ -3707,7 +3716,8 @@ arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, 
         // cout << "OKKKKK8" << endl;
         // cout << "DAinvDRNWinvb(0) is " << DAinvDRNWinvb(0) << endl;
         //arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb0, RvecIndex);
-        arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecIndex);
+        // arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecIndex);
+		arma::fcolvec RtAinvDRNWinvb = getProdRtb_Surv(AinvRNWinvb, RvecStartIndex, RvecEndIndex);    ///T modified by Tian on Feb 13, 2026
         //cout << "RtAinvDRNWinvb is " << RtAinvDRNWinvb(0) << endl;
         crossProdVec1 = NWinv % RtAinvDRNWinvb;
         //cout << "crossProdVec1(0) is " << crossProdVec1(0) << endl;
@@ -3730,6 +3740,8 @@ arma::fcolvec getCrossprod_Surv_new_LOCO(arma::fcolvec& bVec, arma::fvec& wVec, 
 
         return(crossProdVec);
 }
+
+
 
 /*
 // [[Rcpp::export]]
@@ -4612,9 +4624,10 @@ if(isUseSparseSigmaforInitTau){
 
 
 // [[Rcpp::export]]
-arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){
+// arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){
+arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){    ///T modified by Tian on Feb 13, 2026
 
-                   //  Start Timers
+    //  Start Timers
     double wall0 = get_wall_time();
     double cpu0  = get_cpu_time();
     int Nnomissing = geno.getNnomissing();
@@ -4634,7 +4647,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVe
                 cout << "use sparse kinship to estimate the variance ratio " << endl;
         }
 
-        arma::fvec rVec = bVec - getCrossprod_Surv_new(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+        // arma::fvec rVec = bVec - getCrossprod_Surv_new(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+		arma::fvec rVec = bVec - getCrossprod_Surv_new(xVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);    ///T modified by Tian on Feb 13, 2026
 
         arma::fvec r1Vec;
         arma::fvec crossProdVec(Nnomissing);
@@ -4661,7 +4675,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVe
         while (sumr2 > tolPCG && iter < maxiterPCG) {
                 iter = iter + 1;
 
-                arma::fcolvec ApVec = getCrossprod_Surv_new(pVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+                // arma::fcolvec ApVec = getCrossprod_Surv_new(pVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+				arma::fcolvec ApVec = getCrossprod_Surv_new(pVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);    ///T modified by Tian on Feb 13, 2026
 
                 arma::fvec preA = (rVec.t() * zVec)/(pVec.t() * ApVec);
 
@@ -4699,9 +4714,13 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new(arma::fvec& wVec,  arma::fvec& tauVe
         return(xVec);
 }
 
+
+
 // [[Rcpp::export]]
-arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
-                   //  Start Timers
+// arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
+arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){    ///T modified by Tian on Feb 13, 2026
+  
+	//  Start Timers
     double wall0 = get_wall_time();
     double cpu0  = get_cpu_time();
     int Nnomissing = geno.getNnomissing();
@@ -4723,7 +4742,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauV
 //      xVec = gen_spsolve_v4(wVec, tauVec, bVec); //to update
     //}else{
         //arma::fvec rVec = bVec;
-        arma::fvec rVec = bVec - getCrossprod_Surv_new2(xVec,  wVec, tauVec, RvecIndex,NVec, sqrtDvec,diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+        // arma::fvec rVec = bVec - getCrossprod_Surv_new2(xVec,  wVec, tauVec, RvecIndex,NVec, sqrtDvec,diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+		arma::fvec rVec = bVec - getCrossprod_Surv_new2(xVec,  wVec, tauVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDvec,diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);    ///T modified by Tian on Feb 13, 2026
         //arma::fvec rVec = bVec - getCrossprod_Surv_new(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
         cout << "rVec: " << endl;
         //rVec.print();
@@ -4789,7 +4809,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauV
 
 
                 //cout << "pVec(0) is " << pVec(0) << endl;
-                arma::fcolvec ApVec = getCrossprod_Surv_new2(pVec, wVec, tauVec, RvecIndex,NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+                // arma::fcolvec ApVec = getCrossprod_Surv_new2(pVec, wVec, tauVec, RvecIndex, NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+				arma::fcolvec ApVec = getCrossprod_Surv_new2(pVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);    ///T modified by Tian on Feb 13, 2026
                 //cout << "ApVec is " << ApVec(0) << endl;
 
 
@@ -4904,9 +4925,13 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new2(arma::fvec& wVec,  arma::fvec& tauV
         return(xVec);
 }
 
+
+
 // [[Rcpp::export]]
-arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
-                   //  Start Timers
+// arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){
+arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & NVec, arma::fvec & sqrtDvec, arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG, arma::fvec & dofWminusU){   ///T modified by Tian on Feb 13, 2026
+	
+	//  Start Timers
     double wall0 = get_wall_time();
     double cpu0  = get_cpu_time();
     int Nnomissing = geno.getNnomissing();
@@ -4926,7 +4951,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec&
         xVec = gen_spsolve_v4(wVec, tauVec, bVec); //to update
     }else{
         //arma::fvec rVec = bVec - getCrossprod_Surv_new2(xVec,  wVec, tauVec, RvecIndex,NVec, Dvec, kuniqtime, maxiterPCG, tolPCG);
-        arma::fvec rVec = bVec - getCrossprod_Surv_new2_LOCO(xVec,  wVec, tauVec, RvecIndex,NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+        // arma::fvec rVec = bVec - getCrossprod_Surv_new2_LOCO(xVec,  wVec, tauVec, RvecIndex,NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+		arma::fvec rVec = bVec - getCrossprod_Surv_new2_LOCO(xVec,  wVec, tauVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDvec, diagofWminusUinv, kuniqtime, maxiterPCG, tolPCG, dofWminusU);   ///T modified by Tian on Feb 13, 2026
         //arma::fvec rVec = bVec - getCrossprod_Surv_new(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
         //cout << "rVec: " << endl;
         //rVec.print();
@@ -4991,7 +5017,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec&
 
 
                 //cout << "RWinNpVec(0) is " << RWinNpVec(0) << endl;
-                arma::fcolvec ApVec = getCrossprod_Surv_new2_LOCO(pVec, wVec, tauVec, RvecIndex,NVec, sqrtDvec, diagofWminusUinv,  kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+                // arma::fcolvec ApVec = getCrossprod_Surv_new2_LOCO(pVec, wVec, tauVec, RvecIndex, NVec, sqrtDvec, diagofWminusUinv,  kuniqtime, maxiterPCG, tolPCG, dofWminusU);
+				arma::fcolvec ApVec = getCrossprod_Surv_new2_LOCO(pVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, NVec, sqrtDvec, diagofWminusUinv,  kuniqtime, maxiterPCG, tolPCG, dofWminusU);   ///T modified by Tian on Feb 13, 2026
                 //cout << "ApVec is " << ApVec(0) << endl;
                 //cout << "OKKKKKK2" << endl;
                 /*
@@ -5106,10 +5133,12 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_LOCO_new2(arma::fvec& wVec,  arma::fvec&
 }
 
 
-// [[Rcpp::export]]
-arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec,  arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){
 
-                   //  Start Timers
+// [[Rcpp::export]]
+// arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec,  arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){
+arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, arma::fvec & WinvN, arma::fvec & Dvec,  arma::fvec & diagofWminusUinv, arma::fvec & x0Vec, int maxiterPCG, float tolPCG){   ///T modified by Tian on Feb 13, 2026
+
+    //  Start Timers
     double wall0 = get_wall_time();
     double cpu0  = get_cpu_time();
     int Nnomissing = geno.getNnomissing();
@@ -5125,7 +5154,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& 
         cout << "use sparse kinship to fit the model " << endl;
         xVec = gen_spsolve_v4(wVec, tauVec, bVec); //to update
     }else{
-        arma::fvec rVec = bVec - getCrossprod_Surv_new_LOCO(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+        // arma::fvec rVec = bVec - getCrossprod_Surv_new_LOCO(xVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+		arma::fvec rVec = bVec - getCrossprod_Surv_new_LOCO(xVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);   ///T modified by Tian on Feb 13, 2026
         arma::fvec r1Vec;
         arma::fvec crossProdVec(Nnomissing);
         arma::fvec zVec(Nnomissing);
@@ -5184,7 +5214,8 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& 
                 //arma::fcolvec RWinN =  Rmat.t() * WinvN;
                 //cout << "RWinN(0) is " << RWinN(0) << endl;
 
-                arma::fcolvec ApVec = getCrossprod_Surv_new_LOCO(pVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+                // arma::fcolvec ApVec = getCrossprod_Surv_new_LOCO(pVec, wVec, tauVec, RvecIndex, sqrtWinvNVec,WinvN,Dvec, kuniqtime, maxiterPCG, tolPCG);
+				arma::fcolvec ApVec = getCrossprod_Surv_new_LOCO(pVec, wVec, tauVec, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, WinvN, Dvec, kuniqtime, maxiterPCG, tolPCG);   ///T modified by Tian on Feb 13, 2026
                 //cout << "ApVec is " << ApVec(0) << endl;
                 //cout << "OKKKKKK2" << endl;
                 /*
@@ -5299,10 +5330,12 @@ arma::fvec getPCG1ofSigmaAndVector_Surv_new_LOCO(arma::fvec& wVec,  arma::fvec& 
         return(xVec);
 }
 
+
+
 //Sigma = tau[1] * diag(1/W) + tau[2] * kins 
 //This function needs the function getDiagOfSigma and function getCrossprod
 // [[Rcpp::export]]
-arma::fvec getPCG1ofSigmaAndVector_LOCO(arma::fvec& wVec,  arma::fvec& tauVec, arma::fvec& bVec, int maxiterPCG, float tolPCG){
+arma::fvec getPCG1ofSigmaAndVector_LOCO(arma::fvec& wVec, arma::fvec& tauVec, arma::fvec& bVec, int maxiterPCG, float tolPCG){
 //	 double wall0 = get_wall_time();
 //    double cpu0  = get_cpu_time();
   	arma::fvec rVec = bVec;
