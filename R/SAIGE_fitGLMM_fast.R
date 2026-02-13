@@ -83,7 +83,7 @@ Getrmat_indexvec_new = function(i, inC){
 	
 	uniqTimeVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
 
-	### interval for risk membership
+	### interval for risk set membership
 	kend = findInterval(x, uniqTimeVec)    # end index: last k with t_k <= x
 	kstart = findInterval(l, uniqTimeVec) + 1    # start index: first k with t_k > l
 	if (kstart > kend){
