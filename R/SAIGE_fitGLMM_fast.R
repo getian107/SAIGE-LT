@@ -1665,7 +1665,6 @@ fitNULLGLMM = function(plinkFile = "",
 				modglmm$coefficients = coef.alpha
 			}
 
-			###??? seems to be repetitive to line 1655
 			if (eventTimeCol != ""){
 				modglmm$minEventTime = minEventTime
 				modglmm$eventTimeBinSize = eventTimeBinSize	
