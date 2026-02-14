@@ -1,4 +1,4 @@
-### Modified by Tian on Feb 10 - Feb 12, 2026 to account for left truncation
+### Modified by Tian on Feb 10 - Feb 14, 2026 to account for left truncation
 ### Delayed entry risk set is defined as R(t) = {j: L_j < t <= T_j}
 ###
 ### Key modifications: (i) risk set definition; (ii) mean function mu = [Lambda0(t_i)-Lambda0(l_i)]*exp(eta)
@@ -11,7 +11,7 @@ GetIndexofCases = function(status, time, entryTime = NULL){    ### add 'entryTim
 		entryTime = rep(-Inf, length(time))    ### reduce to no left truncation if 'entryTime' is null
 	}
 
-	timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status, entryTime=entryTime)   ### add 'entryTime'
+	timedata = data.frame(time=time, orgIndex=seq(1,length(time)), status=status, entryTime=entryTime)    ### add 'entryTime'
 	timedata = timedata[order(timedata$time),]    # sort individuals by event/censoring time
 	timedata$newIndex = seq(1,length(time))    # newIndex = rank by time after sorting
 	
@@ -63,7 +63,7 @@ Getrmat_indexvec = function(i, inC){
 
 	uniqTimeIndexVec = inC$timedata$time[inC$uniqTimeIndex]    # unique event times
 		
-    a = which(uniqTimeIndexVec > l & uniqTimeIndexVec <= x)   ### indices of unique event times when individual i is in the risk set
+    a = which(uniqTimeIndexVec > l & uniqTimeIndexVec <= x)    ### indices of unique event times when individual i is in the risk set
 
 	if (length(a) == 0){
 		b = cbind(integer(0), integer(0))    ### individual i not in any risk set
@@ -141,7 +141,7 @@ GetdenominN = function(uniqTimeIndex, lin.pred.new, newIndexWithTies, caseIndexw
 
 
 
-GetLambda0<-function(lin.pred, inC){   ### this function is rewritten
+GetLambda0<-function(lin.pred, inC){    ### this function is rewritten
 	# for each individual i, calculate Lambda0(t_i) - Lambda0(l_i)
 	
 	lin.pred.new = lin.pred[inC$timedata$orgIndex]    # convert linear predictors from original order to time sorted order
@@ -2682,7 +2682,6 @@ extractVarianceRatio = function(obj.glmm.null,
 		if (pcgforUhatforSurvAnalysis){
 			# Sigma_iX_noLOCO = getSigma_X_Surv_new(W, tauVecNew, X, RvecIndex, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 			### RvecIndex -> (RvecStart, RvecEnd)
-			###!!! need to update external functions
 			Sigma_iX_noLOCO = getSigma_X_Surv_new(W, tauVecNew, X, RvecStart, RvecEnd, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 		}else{
 			Sigma_iX_noLOCO = getSigma_X_Surv(W, tauVecNew, X, WinvNRt, ACinv, diagofWminusUinv, sqrtDRN, maxiterPCG, tolPCG)
@@ -2840,7 +2839,6 @@ extractVarianceRatio = function(obj.glmm.null,
 								if (pcgforUhatforSurvAnalysis){
 									# Sigma_iG = getSigma_G_Surv_new(W, tauVecNew, G, RvecIndex, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 									### RvecIndex -> (RvecStart, RvecEnd)
-									###!!! need to update external functions
 									Sigma_iG = getSigma_G_Surv_new(W, tauVecNew, G, RvecStart, RvecEnd, sqrtWinvNVec, WinvNvec, Dvec, diagofWminusUinv, Nvec, maxiterPCG, tolPCG)
 								}else{
 									Sigma_iG = getSigma_G_Surv(W, tauVecNew, G, WinvNRt, ACinv, diagofWminusUinv, sqrtDRN, maxiterPCG, tolPCG)
@@ -2937,4 +2935,5 @@ extractVarianceRatio = function(obj.glmm.null,
 	data = read.table(varRatioOutFile, header=F)
 	print(data)
 }
+
 
