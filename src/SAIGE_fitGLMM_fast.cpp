@@ -2609,7 +2609,9 @@ struct CorssProd_RandbVec_surv : public Worker
 {
         // source vectors
         arma::fcolvec & n_bVec;
-        arma::fcolvec & n_RvecIndex;
+        // arma::fcolvec & n_RvecIndex;
+		arma::fcolvec & n_RvecStartIndex;    ///T modified by Tian on Feb 13, 2026
+		arma::fcolvec & n_RvecEndIndex;    ///T modified by Tian on Feb 13, 2026
         unsigned int k_uniqTime;
         // product that I have accumulated
         arma::fvec m_bout;
@@ -2665,7 +2667,8 @@ struct CorssProd_RandbVec_surv : public Worker
         void join(const  CorssProd_RandbVec_surv & rhs) {
         m_bout += rhs.m_bout;
         }
-}
+};
+
 
 
 //http://gallery.rcpp.org/articles/parallel-inner-product/
