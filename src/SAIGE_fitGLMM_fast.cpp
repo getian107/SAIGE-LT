@@ -2517,7 +2517,7 @@ struct CorssProd_WinvNRttandVec : public Worker
 						vec = extractVecatTimek(ktime, n_RvecStartIndex, n_RvecEndIndex, n_WinvN);    ///T modified by Tian on Feb 13, 2026
 //                      std::cout << "j: " << j << std::endl;
                         val1 = dot(vec,  n_bVec);
-                        // m_bout[i] += m_bout[i] + val1;    ///??? Is this a bug?
+                        // m_bout[i] += m_bout[i] + val1;    ///??? Is this a bug? modified as below
 						m_bout[i] += val1;    ///T modified by Tian on Feb 13, 2026
                 }
         }
