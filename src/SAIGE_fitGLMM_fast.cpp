@@ -2540,12 +2540,7 @@ struct CorssProd_WinvNRttandVec : public Worker
 
 ///T modified by Tian on Feb 13, 2026
 // [[Rcpp::export]]
-void extractVecfornthSample(unsigned int nthsample,
-                            unsigned int k_uniqTime,
-                            arma::fvec & RvecStartIndex,
-                            arma::fvec & RvecEndIndex,
-                            arma::fvec & sqrtWinvNVec,
-                            arma::fvec & nthVec) {
+void extractVecfornthSample(unsigned int nthsample, unsigned int k_uniqTime, arma::fvec & RvecStartIndex, arma::fvec & RvecEndIndex, arma::fvec & sqrtWinvNVec, arma::fvec & nthVec) {
 	
     	unsigned int kstart1 = (unsigned int)RvecStartIndex(nthsample);
     	unsigned int kend1 = (unsigned int)RvecEndIndex(nthsample);
@@ -2578,12 +2573,7 @@ void extractVecfornthSample(unsigned int nthsample,
 
 ///T modified by Tian on Feb 13, 2026
 // [[Rcpp::export]]
-void extractVecfornthSample_double(unsigned int nthsample,
-                                   unsigned int k_uniqTime,
-                                   arma::vec & RvecStartIndex,
-                                   arma::vec & RvecEndIndex,
-                                   arma::vec & sqrtWinvNVec,
-                                   arma::vec & nthVec) {
+void extractVecfornthSample_double(unsigned int nthsample, unsigned int k_uniqTime, arma::vec & RvecStartIndex, arma::vec & RvecEndIndex, arma::vec & sqrtWinvNVec, arma::vec & nthVec) {
 	
     	unsigned int kstart1 = (unsigned int)RvecStartIndex(nthsample);
     	unsigned int kend1 = (unsigned int)RvecEndIndex(nthsample);
@@ -5932,7 +5922,7 @@ arma::fmat getSigma_X_Surv_new_LOCO(arma::fvec& wVec, arma::fvec& tauVec,arma::f
                         // Sigma_iX1.col(i) = getPCG1ofSigmaAndVector_Surv_new_LOCO(wVec, tauVec, XmatVecTemp, RvecIndex, sqrtWinvNVec, WinvN, Dvec, diagofWminusUinv, x0Vec, maxiterPCG, tolPCG);
 						Sigma_iX1.col(i) = getPCG1ofSigmaAndVector_Surv_new_LOCO(wVec, tauVec, XmatVecTemp, RvecStartIndex, RvecEndIndex, sqrtWinvNVec, WinvN, Dvec, diagofWminusUinv, x0Vec, maxiterPCG, tolPCG);   ///T modified by Tian on Feb 13, 2026
                 }else{
-                        //Sigma_iX1.col(i) = getProdWminusUb_Surv(XmatVecTemp, RvecIndex, Nvec, sqrtDVec, wVec);   ///T modified by Tian on Feb 13, 2026
+                        //Sigma_iX1.col(i) = getProdWminusUb_Surv(XmatVecTemp, RvecIndex, Nvec, sqrtDVec, wVec);
                         Sigma_iX1.col(i) = x0Vec;
                 }
         //      cout << "Sigma_iX1(0,i) " << Sigma_iX1(0,i) << endl;
