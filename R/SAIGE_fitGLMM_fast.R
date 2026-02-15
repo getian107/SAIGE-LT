@@ -1188,7 +1188,7 @@ fitNULLGLMM = function(plinkFile = "",
 
 			### check 'entryTimeCol' if provided
 			if (entryTimeCol != ""){
-				if (!(evtryTimeCol %in% colnames(data))){
+				if (!(entryTimeCol %in% colnames(data))){
 					stop("ERROR! entryTimeCol does not exsit in the phenoFile \n")
 				}
 			}
@@ -1302,6 +1302,11 @@ fitNULLGLMM = function(plinkFile = "",
 				formula = paste0(phenoCol, "~", paste0(covarColList, collapse = "+")) 
 				formula.null = as.formula(formula)
             }
+		}
+
+		### carry entryTimeCol through the pipeline so it survives into dataMerge_sort
+		if (entryTimeCol != ""){
+			mmat[, entryTimeCol] = data[, entryTimeCol]
 		}
 
         mmat$IID = data[, which(sampleIDColinphenoFile == colnames(data))]
