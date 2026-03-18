@@ -253,7 +253,7 @@ Get_Coef_LOCO = function(y, X, tau, family, alpha0, eta0,  offset, maxiterPCG, t
 		Lambda0 = GetLambda0(eta0, inC)    ### GetLambda0 returns Lambda0(t_i) - Lambda0(l_i)
 		mu = Lambda0*exp(eta0)    # mean function
 		Y = eta0 + (y - mu)/mu    # working response
-		W = as.vector(mu) 
+		W = as.vector(mu)
 	}else{    # standard GLM IRLS
 		mu = family$linkinv(eta0)
 		mu.eta = family$mu.eta(eta0)
@@ -1193,6 +1193,7 @@ fitNULLGLMM = function(plinkFile = "",
 				}
 			}
 
+			minEventTime = NULL    # will be set below only when eventTimeBinSize is specified
 			if (!is.null(eventTimeBinSize)){
 				cat("eventTimeBinSize is specified, so event time will be grouped by bins with size ", eventTimeBinSize, "\n")
 				minEventTime = min(data[,eventTimeCol])
@@ -1336,6 +1337,24 @@ fitNULLGLMM = function(plinkFile = "",
                 mmat_nomissing = mmat_nomissing[-rmCensor,]    # remove individuals with censored time < min event time
                 cat(length(rmCensor), " individuals that are censored before the first event is removed\n")
             }
+            ### add 'entryTime': remove censored individuals with no cohort events in (L_i, T_i]
+            if (entryTimeCol != "" && entryTimeCol %in% colnames(mmat_nomissing)){
+                pheVec       = mmat_nomissing[, phenoCol]
+                eventTimeVec = mmat_nomissing[, eventTimeCol]
+                eventTimes_all = eventTimeVec[pheVec == 1]
+                censored_idx   = which(pheVec == 0)
+                if (length(censored_idx) > 0 && length(eventTimes_all) > 0){
+                    L_cens = mmat_nomissing[censored_idx, entryTimeCol]
+                    T_cens = eventTimeVec[censored_idx]
+                    has_event = mapply(function(L, T) any(eventTimes_all > L & eventTimes_all <= T),
+                                       L_cens, T_cens)
+                    rm_zero = censored_idx[!has_event]
+                    if (length(rm_zero) > 0){
+                        mmat_nomissing = mmat_nomissing[-rm_zero, ]
+                        cat(length(rm_zero), " censored individuals with no cohort events in their risk window (L_i, T_i] removed\n")
+                    }
+                }
+            }
         }
 		
         cat(nrow(mmat_nomissing), " samples have non-missing phenotypes\n")
@@ -1372,6 +1391,25 @@ fitNULLGLMM = function(plinkFile = "",
 				dataMerge = dataMerge[-rmCensor,]    # remove individuals with censored time < min event time
 				cat("After subsetting to samples with genotypes avaialble, ")
                 cat(length(rmCensor)," individuals that are censored before the first event is removed\n")
+            }
+            ### add 'entryTime': remove censored individuals with no cohort events in (L_i, T_i]
+            if (entryTimeCol != "" && entryTimeCol %in% colnames(dataMerge)){
+                pheVec       = dataMerge[, phenoCol]
+                eventTimeVec = dataMerge[, eventTimeCol]
+                eventTimes_all = eventTimeVec[pheVec == 1]
+                censored_idx   = which(pheVec == 0)
+                if (length(censored_idx) > 0 && length(eventTimes_all) > 0){
+                    L_cens = dataMerge[censored_idx, entryTimeCol]
+                    T_cens = eventTimeVec[censored_idx]
+                    has_event = mapply(function(L, T) any(eventTimes_all > L & eventTimes_all <= T),
+                                       L_cens, T_cens)
+                    rm_zero = censored_idx[!has_event]
+                    if (length(rm_zero) > 0){
+                        dataMerge = dataMerge[-rm_zero, ]
+                        cat("After subsetting to samples with genotypes available, ")
+                        cat(length(rm_zero), " censored individuals with no cohort events in their risk window (L_i, T_i] removed\n")
+                    }
+                }
             }
         }
 
@@ -2603,7 +2641,7 @@ extractVarianceRatio = function(obj.glmm.null,
 		gc()
 		Lambda0 = obj.glmm.null$Lambda0
 
-		### guard against Lambda0 <= 0
+		### guard against Lambda0 <= 0 (should not occur after data cleaning)
 		idx_zero = which(Lambda0 <= 0 | !is.finite(Lambda0))
 		if (length(idx_zero) > 0){
 			stop("ERROR! Lambda0(T)-Lambda0(L) is 0 or infinite for ", length(idx_zero), " individuals. Please remove these individuals.\n")
